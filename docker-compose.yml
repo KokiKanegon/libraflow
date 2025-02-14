@@ -1,0 +1,49 @@
+# [hoge]はhogeを好きな値に変えて、[]は付けずに置き換えてください。
+# 例）[container_name] -> crox_postgres
+version: "3.6"
+services:
+  postgres:
+    image: postgres:11.12
+    container_name: libraflow_postgres
+    # restart: always #WSL2のUbuntu起動時に自動で起動する場合のオプション
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgre
+      POSTGRES_DB: libnraflow
+    ports:
+      - "6543:5432"
+  graphql-engine:
+    image: hasura/graphql-engine:v2.1.1
+    container_name: libraflow_hasura
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres"
+    # restart: always #WSL2のUbuntu起動時に自動で起動する場合のオプション
+    environment:
+      ## postgres database to store Hasura metadata
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgre@postgres:5432/libraflow
+      ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
+      PG_DATABASE_URL: postgres://postgres:postgre@postgres:5432/libraflow
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+  minio:
+    image: minio/minio:RELEASE.2021-06-17T00-10-46Z
+    container_name: libraflow_minio
+    environment:
+      MINIO_ROOT_USER: Draco
+      MINIO_ROOT_PASSWORD: Serpens01
+    ports:
+      - "9000:9000"
+    command: server /data
+    #windowsマシン内にデータ永続化する場合以下2行を有効化
+    # volumes:
+    # - /mnt/c/[your_path_under_C_drive]:/data
+volumes:
+  db_data:
