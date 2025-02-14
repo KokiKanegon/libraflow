@@ -10,7 +10,7 @@ services:
       - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgre
-      POSTGRES_DB: libnraflow
+      POSTGRES_DB: libraflow
     ports:
       - "6543:5432"
   graphql-engine:
