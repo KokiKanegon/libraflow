@@ -28,7 +28,6 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/bookinfo" element={<Bookinfo />} />
-          <Route path="/bookregister" element={<BookRegister />} />
           <Route path="/edit/:book_code" element={<BookEditor />} />
           <Route path="/testpage" element={<CardWithForm />} />
           <Route path="/main" element={<App />} />

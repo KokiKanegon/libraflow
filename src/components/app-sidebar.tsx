@@ -39,11 +39,6 @@ const items = [
     icon: BookOpen,
   },
   {
-    title: "Register Book",
-    url: "/libraflow/bookregister",
-    icon: FilePlus,
-  },
-  {
     title: "Edit Book",
     url: "/libraflow/edit/:book_code",
     icon: Edit,

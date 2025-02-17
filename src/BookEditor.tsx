@@ -20,8 +20,9 @@ import {
 import { Label } from "./components/ui/label";
 import { ChangeEventHandler } from "react";
 import { Textarea } from "./components/ui/textarea";
+import { graphql } from "./gql/gql";
 
-const GET_BOOK_BY_CODE = gql`
+const GET_BOOK_BY_CODE = gql(`
   query GetBookByCode($book_code: String!) {
     libraflow_t_book(where: { book_code: { _eq: $book_code } }) {
       id
@@ -45,13 +46,14 @@ const GET_BOOK_BY_CODE = gql`
       category_name
     }
   }
-`;
+`);
 
-const UPDATE_BOOK = gql`
+const UPDATE_BOOK = gql(`
   mutation UpdateBook(
     $id: uuid!
     $title: String
     $author: String
+    $book_code : String
     $isbn_code: String
     $m_category_id: uuid
     $m_storage_location_id: uuid
@@ -64,6 +66,7 @@ const UPDATE_BOOK = gql`
       _set: {
         title: $title
         author: $author
+        book_code: $book_code
         isbn_code: $isbn_code
         m_category_id: $m_category_id
         m_storage_location_id: $m_storage_location_id
@@ -75,7 +78,7 @@ const UPDATE_BOOK = gql`
       id
     }
   }
-`;
+`);
 
 function BookEditor() {
   const { book_code } = useParams(); // URLから book_code を取得
@@ -84,17 +87,18 @@ function BookEditor() {
     id: "",
     title: "",
     author: "",
+    book_code: "",
     isbn_code: "",
     m_category_id: "",
     m_storage_location_id: "",
     note: "",
     publisher: "",
-    pubication_date: "",
+    publication_date: "",
   }); // 編集用データ
 
   // 書籍データを取得
   const { data, loading, error, refetch } = useQuery(GET_BOOK_BY_CODE, {
-    variables: { book_code },
+    variables: { book_code: book_code ?? "" },
     skip: !book_code, // book_codeがない場合はクエリをスキップ
   });
 
@@ -112,6 +116,7 @@ function BookEditor() {
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const { name, value } = e.target;
+
     setFormState({ ...formState, [name]: value });
   };
 
@@ -121,13 +126,22 @@ function BookEditor() {
       id,
       title,
       author,
+      book_code,
       isbn_code,
       m_category_id,
       m_storage_location_id,
       note,
       publisher,
-      pubication_date,
+      publication_date,
     } = formState;
+
+    const formatDate = (timestamp: string) => {
+      return new Date(timestamp).toISOString().slice(0, 10); // YYYY-MM-DD形式に変換
+    };
+
+    const [formState, setFormState] = useState({
+      publication_date: formatDate(data.libraflow_t_book[0].publication_date), // 初期値を変換して設定
+    });
 
     try {
       updateBook({
@@ -135,12 +149,13 @@ function BookEditor() {
           id,
           title,
           author,
+          book_code,
           isbn_code,
           m_category_id: m_category_id || null,
           m_storage_location_id: m_storage_location_id || null,
           note,
           publisher,
-          pubication_date,
+          publication_date,
         },
       });
       alert("Book updated successfully!");
@@ -152,8 +167,9 @@ function BookEditor() {
   useEffect(() => {
     console.log(data);
     if (data && data.libraflow_t_book.length > 0) {
-      console.log("aaa");
-      setFormState({ ...data.libraflow_t_book[0] });
+      setFormState({
+        ...data.libraflow_t_book[0],
+      });
     }
   }, [data]);
 
@@ -171,7 +187,7 @@ function BookEditor() {
       <h1 className="text-xl font-bold mb-4">Search and Edit Book</h1>
 
       {/* 検索フォーム */}
-      <div className="flex gap-4 mb-4">
+      {/* <div className="flex gap-4 mb-4">
         <Input
           placeholder="Enter Book Code"
           value={searchCode}
@@ -180,7 +196,7 @@ function BookEditor() {
           }}
         />
         <Button onClick={handleSearch}>Search</Button>
-      </div>
+      </div> */}
 
       {/* 検索の結果 */}
       {loading && <p>Loading...</p>}
@@ -200,6 +216,14 @@ function BookEditor() {
               </CardHeader>
 
               <CardContent>
+                <Label htmlFor="name">code</Label>
+                <Input
+                  name="code"
+                  placeholder="Code"
+                  value={formState.book_code}
+                  onChange={handleChange}
+                  required
+                />
                 <Label htmlFor="name">Title</Label>
                 <Input
                   name="title"
@@ -221,9 +245,10 @@ function BookEditor() {
                   type="date"
                   name="publication_date"
                   placeholder="Publication date"
-                  value={formState.pubication_date}
+                  value={formState.publication_date}
                   onChange={handleChange}
                 />
+                {formState.publication_date}
                 <Label htmlFor="name">Publisher</Label>
                 <Input
                   name="publisher"
@@ -231,7 +256,6 @@ function BookEditor() {
                   value={formState.publisher}
                   onChange={handleChange}
                 />
-
                 <Label htmlFor="name">ISBNCode</Label>
                 <Input
                   name="isbn_code"
@@ -251,14 +275,13 @@ function BookEditor() {
                     <SelectValue placeholder="Select a Category" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {data.libraflow_m_category.map((category: any) => (
+                    {data?.libraflow_m_category.map((category: any) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.category_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Select
                   value={formState?.m_storage_location_id ?? ""}
                   onValueChange={(value: any) => {
@@ -273,7 +296,7 @@ function BookEditor() {
                     <SelectValue placeholder="Select a Storage location" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {data.libraflow_m_storage_location.map((storage: any) => {
+                    {data?.libraflow_m_storage_location.map((storage: any) => {
                       return (
                         <SelectItem key={storage.id} value={storage.id}>
                           {storage.storage_location_name}
@@ -282,7 +305,6 @@ function BookEditor() {
                     })}
                   </SelectContent>
                 </Select>
-
                 <Label htmlFor="name">Note</Label>
                 <Textarea
                   name="note"
@@ -295,7 +317,6 @@ function BookEditor() {
                     });
                   }}
                 />
-
                 <Button
                   type="submit"
                   disabled={updateLoading}
