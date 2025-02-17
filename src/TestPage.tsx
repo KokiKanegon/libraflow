@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select";
+import { SelectGroup, SelectLabel } from "@radix-ui/react-select";
 
 function CardWithForm() {
   return (
@@ -49,6 +50,21 @@ function CardWithForm() {
             </div>
           </div>
         </form>
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a fruit" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Fruits</SelectLabel>
+              <SelectItem value="apple">Apple</SelectItem>
+              <SelectItem value="banana">Banana</SelectItem>
+              <SelectItem value="blueberry">Blueberry</SelectItem>
+              <SelectItem value="grapes">Grapes</SelectItem>
+              <SelectItem value="pineapple">Pineapple</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline">Cancel</Button>

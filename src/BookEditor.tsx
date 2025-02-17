@@ -1,8 +1,25 @@
-import { useState } from "react";
+import { FormEventHandler, useCallback, useEffect, useState } from "react";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSubmit } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
+import { Label } from "./components/ui/label";
+import { ChangeEventHandler } from "react";
+import { Textarea } from "./components/ui/textarea";
 
 const GET_BOOK_BY_CODE = gql`
   query GetBookByCode($book_code: String!) {
@@ -13,34 +30,22 @@ const GET_BOOK_BY_CODE = gql`
       author
       isbn_code
       m_category_id
-      m_strage_location_id
+      m_storage_location_id
       note
       publisher
       publication_date
     }
-  }
-`;
-
-const GET_CATEGORIES = gql`
-  query GetCategoryList {
+    libraflow_m_storage_location(order_by: { index: asc }) {
+      id
+      storage_location_name
+      index
+    }
     libraflow_m_category {
       id
       category_name
     }
   }
 `;
-
-console.log(GET_CATEGORIES);
-
-const { data } = useQuery(GET_CATEGORIES);
-
-// const {
-//   data: categoryData,
-//   loading: categoryLoading,
-//   error: categoryError,
-// } = useQuery(GET_CATEGORIES);
-
-console.log(data);
 
 const UPDATE_BOOK = gql`
   mutation UpdateBook(
@@ -49,9 +54,10 @@ const UPDATE_BOOK = gql`
     $author: String
     $isbn_code: String
     $m_category_id: uuid
-    $m_strage_location_id: uuid
+    $m_storage_location_id: uuid
     $note: String
     $publisher: String
+    $publication_date: timestamptz
   ) {
     update_libraflow_t_book_by_pk(
       pk_columns: { id: $id }
@@ -60,9 +66,10 @@ const UPDATE_BOOK = gql`
         author: $author
         isbn_code: $isbn_code
         m_category_id: $m_category_id
-        m_strage_location_id: $m_strage_location_id
+        m_storage_location_id: $m_storage_location_id
         note: $note
         publisher: $publisher
+        publication_date: $publication_date
       }
     ) {
       id
@@ -72,16 +79,28 @@ const UPDATE_BOOK = gql`
 
 function BookEditor() {
   const { book_code } = useParams(); // URLから book_code を取得
-  const navigate = useNavigate();
-
   const [searchCode, setSearchCode] = useState("");
-  const [formState, setFormState] = useState(null); // 編集用データ
+  const [formState, setFormState] = useState({
+    id: "",
+    title: "",
+    author: "",
+    isbn_code: "",
+    m_category_id: "",
+    m_storage_location_id: "",
+    note: "",
+    publisher: "",
+    pubication_date: "",
+  }); // 編集用データ
 
   // 書籍データを取得
   const { data, loading, error, refetch } = useQuery(GET_BOOK_BY_CODE, {
     variables: { book_code },
     skip: !book_code, // book_codeがない場合はクエリをスキップ
   });
+
+  // const { data: categoryData, loading: categoryLoading } =
+  //   useQuery(GET_CATEGORIES);
+  // const { data: storageData, loading: storageLoading } = useQuery(GET_STORAGE);
 
   const [updateBook, { loading: updateLoading, error: updateError }] =
     useMutation(UPDATE_BOOK);
@@ -91,12 +110,12 @@ function BookEditor() {
     refetch(); // 検索を再実行
   };
 
-  const handleChange = (e) => {
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const { name, value } = e.target;
     setFormState({ ...formState, [name]: value });
   };
 
-  const handleUpdate = async (e) => {
+  const clickOnSubmit: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
     const {
       id,
@@ -104,18 +123,24 @@ function BookEditor() {
       author,
       isbn_code,
       m_category_id,
-      m_strage_location_id,
+      m_storage_location_id,
+      note,
+      publisher,
+      pubication_date,
     } = formState;
 
     try {
-      await updateBook({
+      updateBook({
         variables: {
           id,
           title,
           author,
           isbn_code,
           m_category_id: m_category_id || null,
-          m_strage_location_id: m_strage_location_id || null,
+          m_storage_location_id: m_storage_location_id || null,
+          note,
+          publisher,
+          pubication_date,
         },
       });
       alert("Book updated successfully!");
@@ -124,9 +149,21 @@ function BookEditor() {
     }
   };
 
-  // データが取得できた場合、フォームデータを初期化
-  if (data && data.libraflow_t_book.length > 0 && !formState) {
-    setFormState(data.libraflow_t_book[0]);
+  useEffect(() => {
+    console.log(data);
+    if (data && data.libraflow_t_book.length > 0) {
+      console.log("aaa");
+      setFormState({ ...data.libraflow_t_book[0] });
+    }
+  }, [data]);
+
+  useEffect(() => {
+    console.log(formState);
+  }, [formState]);
+
+  // どれかがloadingなら、ローディング表示
+  if (loading) {
+    return <p className="text-center text-xl font-bold">Loading...</p>;
   }
 
   return (
@@ -138,7 +175,9 @@ function BookEditor() {
         <Input
           placeholder="Enter Book Code"
           value={searchCode}
-          onChange={(e) => setSearchCode(e.target.value)}
+          onChange={(e) => {
+            setSearchCode(e.target.value);
+          }}
         />
         <Button onClick={handleSearch}>Search</Button>
       </div>
@@ -150,69 +189,128 @@ function BookEditor() {
 
       {/* 編集フォーム */}
       {formState && (
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <Input
-            name="title"
-            placeholder="Title"
-            value={formState.title}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            name="author"
-            placeholder="Author"
-            value={formState.author}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            name="isbn_code"
-            placeholder="ISBN Code"
-            value={formState.isbn_code}
-            onChange={handleChange}
-          />
+        <div className="space-y-4">
+          <div className="flex flex-col space-y-1.5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Editor</CardTitle>
+                <CardDescription>
+                  Enter books infomatino and press bottom button
+                </CardDescription>
+              </CardHeader>
 
-          {/* カテゴリ選択（プルダウン） */}
-          <div>
-            <label
-              htmlFor="m_category_id"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Category
-            </label>
-            <select
-              name="m_category_id"
-              value={formState.m_category_id || ""}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200"
-            >
-              <option value="">Select a category</option>
-              {categoryLoading && <option>Loading...</option>}
-              {categoryError && <option>Error loading categories</option>}
-              {categoryData &&
-                categoryData.libraflow_m_category.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.category_name}
-                  </option>
-                ))}
-            </select>
+              <CardContent>
+                <Label htmlFor="name">Title</Label>
+                <Input
+                  name="title"
+                  placeholder="Title"
+                  value={formState.title}
+                  onChange={handleChange}
+                  required
+                />
+                <Label htmlFor="name">Author</Label>
+                <Input
+                  name="author"
+                  placeholder="Author"
+                  value={formState.author}
+                  onChange={handleChange}
+                  required
+                />
+                <Label htmlFor="name">PublicationDate</Label>
+                <Input
+                  type="date"
+                  name="publication_date"
+                  placeholder="Publication date"
+                  value={formState.pubication_date}
+                  onChange={handleChange}
+                />
+                <Label htmlFor="name">Publisher</Label>
+                <Input
+                  name="publisher"
+                  placeholder="Publiser"
+                  value={formState.publisher}
+                  onChange={handleChange}
+                />
+
+                <Label htmlFor="name">ISBNCode</Label>
+                <Input
+                  name="isbn_code"
+                  placeholder="ISBN Code"
+                  value={formState.isbn_code}
+                  onChange={handleChange}
+                />
+                {/* カテゴリ選択（プルダウン） */}
+                <Label htmlFor="name">category</Label>
+                <Select
+                  value={formState?.m_category_id ?? ""}
+                  onValueChange={(value) => {
+                    setFormState({ ...formState, m_category_id: value });
+                  }}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select a Category" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {data.libraflow_m_category.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.category_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={formState?.m_storage_location_id ?? ""}
+                  onValueChange={(value: any) => {
+                    setFormState({
+                      ...formState,
+                      m_storage_location_id: value,
+                    });
+                  }}
+                >
+                  <Label htmlFor="name">Storage</Label>
+                  <SelectTrigger id="storage id">
+                    <SelectValue placeholder="Select a Storage location" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {data.libraflow_m_storage_location.map((storage: any) => {
+                      return (
+                        <SelectItem key={storage.id} value={storage.id}>
+                          {storage.storage_location_name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+
+                <Label htmlFor="name">Note</Label>
+                <Textarea
+                  name="note"
+                  placeholder="Note"
+                  value={formState.note}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setFormState({
+                      ...formState,
+                      note: event.target.value, // ✅ 正しく値を取得
+                    });
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  disabled={updateLoading}
+                  onClick={clickOnSubmit}
+                >
+                  {updateLoading ? "Updating..." : "Update Book"}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-
-          <Input
-            name="m_strage_location_id"
-            placeholder="Storage Location ID (UUID)"
-            value={formState.m_strage_location_id}
-            onChange={handleChange}
-          />
-
-          <Button type="submit" disabled={updateLoading}>
-            {updateLoading ? "Updating..." : "Update Book"}
-          </Button>
 
           {updateError && (
             <p className="text-red-500">Error: {updateError.message}</p>
           )}
-        </form>
+        </div>
       )}
     </div>
   );

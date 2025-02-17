@@ -13,7 +13,7 @@ const GET_REPOSITORIES = gql`
       author
       isbn_code
       m_category_id
-      m_strage_location_id
+      m_storage_location_id
       update_date
       create_date
       _is_delete
