@@ -2,10 +2,13 @@ import {
   Home,
   BookOpen,
   Edit,
-  FilePlus,
   Search,
   Settings,
   LogIn,
+  Book,
+  BookDashed,
+  BookCopyIcon,
+  BookDashedIcon,
 } from "lucide-react";
 
 import {
@@ -44,9 +47,19 @@ const items = [
     icon: Edit,
   },
   {
-    title: "Search",
+    title: "Register Book",
+    url: "/libraflow/register/",
+    icon: BookCopyIcon,
+  },
+  {
+    title: "Return Book",
+    url: "/libraflow/register/",
+    icon: BookDashedIcon,
+  },
+  {
+    title: "MyPage",
     url: "/libraflow/testpage",
-    icon: Search,
+    icon: Book,
   },
   {
     title: "Settings",

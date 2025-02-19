@@ -123,6 +123,17 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
+.thumbnail {
+  margin-bottom: 5%;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

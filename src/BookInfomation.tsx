@@ -26,7 +26,6 @@ const GET_REPOSITORIES = gql`
 
 function BookInfo() {
   const navigate = useNavigate();
-  const [count, setCount] = useState(0);
   const { loading, error, data } = useQuery(GET_REPOSITORIES);
 
   if (loading) return <p>Loading...</p>;

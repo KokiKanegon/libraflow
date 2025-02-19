@@ -20,7 +20,8 @@ import {
 import { Label } from "./components/ui/label";
 import { ChangeEventHandler } from "react";
 import { Textarea } from "./components/ui/textarea";
-import { graphql } from "./gql/gql";
+import { setMaxIdleHTTPParsers } from "http";
+// import { graphql } from "./gql/gql";
 
 const GET_BOOK_BY_CODE = gql(`
   query GetBookByCode($book_code: String!) {
@@ -59,7 +60,7 @@ const UPDATE_BOOK = gql(`
     $m_storage_location_id: uuid
     $note: String
     $publisher: String
-    $publication_date: timestamptz
+    $publication_date: date
   ) {
     update_libraflow_t_book_by_pk(
       pk_columns: { id: $id }
@@ -81,8 +82,7 @@ const UPDATE_BOOK = gql(`
 `);
 
 function BookEditor() {
-  const { book_code } = useParams(); // URLから book_code を取得
-  const [searchCode, setSearchCode] = useState("");
+  const { book_code_on_url } = useParams(); // URLから book_code を取得
   const [formState, setFormState] = useState({
     id: "",
     title: "",
@@ -97,26 +97,17 @@ function BookEditor() {
   }); // 編集用データ
 
   // 書籍データを取得
-  const { data, loading, error, refetch } = useQuery(GET_BOOK_BY_CODE, {
-    variables: { book_code: book_code ?? "" },
-    skip: !book_code, // book_codeがない場合はクエリをスキップ
+  const { data, loading, error } = useQuery(GET_BOOK_BY_CODE, {
+    variables: { book_code: book_code_on_url ?? "" },
+    skip: !book_code_on_url, // book_codeがない場合はクエリをスキップ,
   });
-
-  // const { data: categoryData, loading: categoryLoading } =
-  //   useQuery(GET_CATEGORIES);
-  // const { data: storageData, loading: storageLoading } = useQuery(GET_STORAGE);
 
   const [updateBook, { loading: updateLoading, error: updateError }] =
     useMutation(UPDATE_BOOK);
 
-  const handleSearch = () => {
-    if (!searchCode.trim()) return;
-    refetch(); // 検索を再実行
-  };
-
   const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const { name, value } = e.target;
-
+    console.log(name, value, formState.book_code);
     setFormState({ ...formState, [name]: value });
   };
 
@@ -135,13 +126,7 @@ function BookEditor() {
       publication_date,
     } = formState;
 
-    const formatDate = (timestamp: string) => {
-      return new Date(timestamp).toISOString().slice(0, 10); // YYYY-MM-DD形式に変換
-    };
-
-    const [formState, setFormState] = useState({
-      publication_date: formatDate(data.libraflow_t_book[0].publication_date), // 初期値を変換して設定
-    });
+    console.log(formState);
 
     try {
       updateBook({
@@ -165,7 +150,7 @@ function BookEditor() {
   };
 
   useEffect(() => {
-    console.log(data);
+    // console.log(data);
     if (data && data.libraflow_t_book.length > 0) {
       setFormState({
         ...data.libraflow_t_book[0],
@@ -173,30 +158,9 @@ function BookEditor() {
     }
   }, [data]);
 
-  useEffect(() => {
-    console.log(formState);
-  }, [formState]);
-
-  // どれかがloadingなら、ローディング表示
-  if (loading) {
-    return <p className="text-center text-xl font-bold">Loading...</p>;
-  }
-
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Search and Edit Book</h1>
-
-      {/* 検索フォーム */}
-      {/* <div className="flex gap-4 mb-4">
-        <Input
-          placeholder="Enter Book Code"
-          value={searchCode}
-          onChange={(e) => {
-            setSearchCode(e.target.value);
-          }}
-        />
-        <Button onClick={handleSearch}>Search</Button>
-      </div> */}
 
       {/* 検索の結果 */}
       {loading && <p>Loading...</p>}
@@ -218,7 +182,7 @@ function BookEditor() {
               <CardContent>
                 <Label htmlFor="name">code</Label>
                 <Input
-                  name="code"
+                  name="book_code"
                   placeholder="Code"
                   value={formState.book_code}
                   onChange={handleChange}
@@ -248,7 +212,6 @@ function BookEditor() {
                   value={formState.publication_date}
                   onChange={handleChange}
                 />
-                {formState.publication_date}
                 <Label htmlFor="name">Publisher</Label>
                 <Input
                   name="publisher"
@@ -316,6 +279,22 @@ function BookEditor() {
                       note: event.target.value, // ✅ 正しく値を取得
                     });
                   }}
+                />
+                {/* 書影取得 with 国会図書館 */}
+                <Label htmlFor="name">Thumbnail</Label>
+                <img
+                  className="thumbnail"
+                  src={`https://ndlsearch.ndl.go.jp/thumbnail/${formState.isbn_code.replace(
+                    /-/g,
+                    ""
+                  )}.jpg`}
+                  alt="...image not found with 国会図書館"
+                />
+                {/* 書影取得 with GoogleBooksAPI */}
+                <img
+                  className="thumbnail"
+                  src="http://books.google.com/books/content?id=affuzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+                  alt="...image not found"
                 />
                 <Button
                   type="submit"
