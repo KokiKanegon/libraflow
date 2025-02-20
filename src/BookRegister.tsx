@@ -284,7 +284,7 @@ export default function BookRegister() {
                   <TableCell>{book.author}</TableCell>
                   <TableCell>{book.isbn_code}</TableCell>
                   <TableCell>
-                    {book.t_borrow_records[0].m_user.user_name}
+                    {book?.t_borrow_records[0]?.m_user.user_name}
                   </TableCell>
                   <TableCell>
                     <Button value={book.book_code} onClick={clickDeleteBook}>

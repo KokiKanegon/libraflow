@@ -24,9 +24,9 @@ import {
 // import { graphql } from "./gql/gql";
 
 // 検索用クエリ
-const GET_BOOK_BY_CODE_SHORT = gql(`
-  query GetBookByCode($a: String!) {
-  libraflow_t_book(where: {book_code: {_eq: $a}}) {
+const testqery = gql(`
+  query GetBookByCode {
+  libraflow_t_book(where: {book_code: {_eq: "1122"}}) {
     id
   }
 }
@@ -44,18 +44,15 @@ const GET_USER = gql(`
 `);
 
 //
-const GET_BOOK_BY_CODE = gql(`
-query GetBookByCode($book_codes: [String!]) {
-  libraflow_t_book(where: {book_code: {_in: $book_codes}}) {
+const GET_BOOK_BY_USER = gql(`
+query GetBookByUser($user_id: uuid!) {
+  libraflow_t_borrow_record(order_by: {borrow_date: desc}, where: {m_user_id: {_eq: $user_id}, return_date: {_is_null: true}}) {
     id
+    t_book {
     book_code
     title
     author
     isbn_code
-    t_borrow_records(order_by: {borrow_date: desc}, where: {return_date: {_is_null: true}}, limit: 1) {
-      m_user {
-        user_name
-      }
     }
   }
 }
@@ -106,34 +103,11 @@ export default function BookReturn() {
     }
   }, [book_code_list]);
 
-  // 書籍データを取得
-  const [checkquery, {}] = useLazyQuery(GET_BOOK_BY_CODE_SHORT, {
-    onCompleted: (useData) => {
-      if (useData.libraflow_t_book.length === 0) {
-        alert("No book found.");
-        set_searchCode("");
-      } else {
-        // すでに book_code_list に含まれている場合はスキップ
-        if (book_code_list.includes(searchCode)) {
-          alert("This book code is already added.");
-          set_searchCode(""); // 入力欄をリセット
-          return;
-        }
-        // コードリストに追加
-        set_book_code_list((prev) => [...prev, searchCode]);
-        set_searchCode(""); // 入力欄をリセット
-      }
-    },
-  });
-
   // 表示用書籍データを取得
-  const [
-    getquery,
-    { data: tableData },
-    // { data: tableData, loading: tableLoading, error: tableError },
-  ] = useLazyQuery(GET_BOOK_BY_CODE, {
+  // const [getquery, { data: tableData }] = useLazyQuery(testqery, {
+  const [getquery, { data: tableData }] = useLazyQuery(GET_BOOK_BY_USER, {
     onCompleted: (tableData) => {
-      console.log("tableData", tableData);
+      console.log(tableData);
     },
   });
 
@@ -213,10 +187,6 @@ export default function BookReturn() {
     const { m_user_id, borrow_date } = formState;
     let message = "";
 
-    console.log("m_user_id", m_user_id);
-    console.log("borrow_date", borrow_date);
-    console.log("tableData", tableData.libraflow_t_book[0].id);
-
     try {
       // Promise.all を使い、すべての非同期処理を並列実行
       const insertions = tableData.libraflow_t_book.map((book: any) =>
@@ -242,26 +212,55 @@ export default function BookReturn() {
     }
   };
 
+  const clickBorrowedList = () => {
+    if (!formState.m_user_id) {
+      alert("No user selected.");
+      return;
+    }
+    alert(formState.m_user_id);
+
+    getquery({ variables: { m_user_id: formState.m_user_id ?? [] } });
+  };
+
   return (
     <>
       {/* // タイトル表示 */}
       <div>
-        <h1> Book Register Page</h1>
+        <h1> Book Return Page</h1>
         <p> 本を読み取ってください。</p>
       </div>
       {/* // 検索画面（Inputbox and SearchButton） */}
-      <div>
-        <Input
-          placeholder="Search books..."
-          className="search-box"
-          value={searchCode}
-          onChange={(e) => {
-            set_searchCode(e.target.value);
-          }}
-        />
-        <Button onClick={clickBookSearch}>Search</Button>
-      </div>
-      {/* // ViewBookInformation */}
+
+      <Card className="user-card">
+        <CardHeader>
+          <Label>貸出情報</Label>
+          <Input
+            placeholder="Search users..."
+            className="search-user-box"
+            value={searchUserCode}
+            onChange={(e) => {
+              set_searchUserCode(e.target.value);
+            }}
+          />
+          <Button onClick={clickUserSearch}>Search</Button>
+        </CardHeader>
+
+        <CardContent>
+          <Label>UserCode</Label>
+          <Input
+            value={`${userData?.libraflow_m_user[0].user_code || ""}`}
+            readOnly
+          />
+          <Label>UserName</Label>
+          <Input
+            value={`${userData?.libraflow_m_user[0].user_name || ""}`}
+            readOnly
+          />
+        </CardContent>
+      </Card>
+
+      <Button onClick={clickBorrowedList}>貸出中のリストを表示</Button>
+
       <Card>
         <CardContent>
           <Label>予約候補</Label>
@@ -284,7 +283,7 @@ export default function BookReturn() {
                   <TableCell>{book.author}</TableCell>
                   <TableCell>{book.isbn_code}</TableCell>
                   <TableCell>
-                    {book.t_borrow_records[0].m_user.user_name}
+                    {/* {book.t_borrow_records[0].m_user.user_name} */}
                   </TableCell>
                   <TableCell>
                     <Button value={book.book_code} onClick={clickDeleteBook}>
@@ -298,51 +297,10 @@ export default function BookReturn() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <Label>貸出情報</Label>
-          <Input
-            placeholder="Search users..."
-            className="search-user-box"
-            value={searchUserCode}
-            onChange={(e) => {
-              set_searchUserCode(e.target.value);
-            }}
-          />
-          <Button onClick={clickUserSearch}>Search</Button>
-        </CardHeader>
-        <CardContent>
-          <Label>UserCode</Label>
-          <Input
-            value={`${userData?.libraflow_m_user[0].user_code || ""}`}
-            readOnly
-          />
-          <Label>UserName</Label>
-          <Input
-            value={`${userData?.libraflow_m_user[0].user_name || ""}`}
-            readOnly
-          />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent>
-          <Label>貸出日</Label>
-          <Input
-            type="date"
-            name="publication_date"
-            placeholder="Publication date"
-            value={formState.borrow_date}
-            onChange={(e) => {
-              setFormState({ ...formState, borrow_date: e.target.value });
-            }}
-          />
-        </CardContent>
-      </Card>
-
       {/* // 貸出冊数の表示 */}
       <Label>現在の冊数：{book_code_list.length ?? 0}冊</Label>
       {/* // 貸出ボタン */}
-      <Button onClick={clickOnSubmit}>借りる</Button>
+      <Button onClick={clickOnSubmit}>返却</Button>
     </>
   );
 }
