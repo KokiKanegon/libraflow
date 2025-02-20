@@ -1,5 +1,11 @@
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
-import { gql, useQuery, useMutation, useLazyQuery } from "@apollo/client";
+import {
+  gql,
+  useQuery,
+  useMutation,
+  useLazyQuery,
+  useReactiveVar,
+} from "@apollo/client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 // import { useParams } from "react-router-dom";
@@ -20,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "./components/ui/table";
+import { isLoggedIn } from "./main";
+import { useNavigate } from "react-router-dom";
 // import { set } from "react-hook-form";
 // import { graphql } from "./gql/gql";
 
@@ -84,6 +92,21 @@ mutation InsertBookRecord(
 `);
 
 export default function BookRegister() {
+  const navigate = useNavigate();
+  // 現在のログイン情報を保持するリアクティブ変数。
+  type UserState = {
+    id: string;
+    user_code: string;
+    user_name: string;
+  } | null;
+
+  const login: UserState = useReactiveVar(isLoggedIn);
+  useEffect(() => {
+    if (login) {
+      getuserquery({ variables: { user_code: login.user_code } });
+    }
+  }, []);
+
   const [searchCode, set_searchCode] = useState<string>("");
   const [searchUserCode, set_searchUserCode] = useState<string>("");
   const [book_code_list, set_book_code_list] = useState<string[]>([]); // 書籍コードリスト
@@ -236,6 +259,7 @@ export default function BookRegister() {
       await Promise.all(insertions);
 
       alert(`Book(s) updated successfully! Last updated: ${message}`);
+      navigate(0);
     } catch (err) {
       console.error("Error updating book:", err);
       alert("An error occurred while updating the book.");

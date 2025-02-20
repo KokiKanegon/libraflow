@@ -12,9 +12,16 @@ import { Label } from "./components/ui/label";
 import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
-import { loginState } from "./main";
+import { isLoggedIn } from "./main";
 
 // クエリ部分
+
+// 現在のログイン情報を保持するリアクティブ変数。
+type UserState = {
+  id: string;
+  user_code: string;
+  user_name: string;
+} | null;
 // 1. ユーザー検索クエリ
 const GET_USER = gql(`
   query GetUserByCode($user_code: String!) {
@@ -24,6 +31,24 @@ const GET_USER = gql(`
     user_name
   }
 }
+`);
+
+// 1. ユーザーログイン用クエリ
+const GET_USER_LOGIN = gql(`
+  query GetUserByCode($user_code: String!, $pw: String!) {
+    libraflow_m_user(
+      where: {
+        _and: [
+          { user_code: { _eq: $user_code } }
+          { pw: { _eq: $pw } }
+        ]
+      }
+    ) {
+      id
+      user_code
+      user_name
+    }
+  }
 `);
 
 let message = "";
@@ -40,68 +65,72 @@ export default function LoginForm({
   const navigate = useNavigate();
 
   // useQuery をコンポーネントのトップレベルで実行
-  const { data, error, loading, refetch } = useQuery(GET_USER, {
+  const {
+    data,
+    error,
+    refetch: refetch_user,
+  } = useQuery(GET_USER, {
     variables: { user_code: form.userCode },
     skip: !form.userCode, // ユーザーコードが入力されるまでクエリを実行しない
   });
 
-  const user_id = loginState((state) => state.user_id);
-  const user_code = loginState((state) => state.user_code);
-  const user_name = loginState((state) => state.user_name);
-  const update_user_id = loginState((state) => state.update_user_id);
-  const update_user_code = loginState((state) => state.update_user_code);
-  const update_user_name = loginState((state) => state.update_user_name);
+  const {
+    data: login_data,
+    error: login_error,
+    refetch: refetch_login,
+  } = useQuery(GET_USER_LOGIN, {
+    variables: { user_code: form.userCode, pw: form.pw },
+    skip: !form.userCode, // ユーザーコードが入力されるまでクエリを実行しない
+  });
 
-  if (
-    message !== "ログインしました" &&
-    user_id !== "" &&
-    user_code !== "" &&
-    user_name !== ""
-  ) {
-    alert("既にログインしています。");
-    navigate("/main/");
-  }
-
-  const onSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // デフォルトの送信動作を防ぐ
 
-    refetch(); // クエリを再実行
+    await refetch_user().then(async () => {
+      console.log(data);
 
-    if (loading) {
-      alert("データを取得中です。しばらくお待ちください。");
-      return;
-    }
+      if (error) {
+        alert("GraphQL Error:" + error);
+        return;
+      }
 
-    if (error) {
-      console.error("GraphQL Error:", error);
-      alert("データの取得に失敗しました。");
-      return;
-    }
+      if (
+        !data ||
+        !data.libraflow_m_user ||
+        data.libraflow_m_user.length === 0
+      ) {
+        message = "登録がないか、ユーザーコードが間違っています";
+        alert(message);
+        return;
+      }
+      await refetch_login().then(() => {
+        if (login_data?.libraflow_m_user.length === 0) {
+          alert("パスワードが間違っています。");
+          return;
+        }
 
-    if (!data || !data.libraflow_m_user || data.libraflow_m_user.length === 0) {
-      message = "登録がないか、ユーザーコードが間違っています";
-      alert(message);
-      return;
-    }
+        message = "ログインしました。";
 
-    if (form.pw !== "rcrs01") {
-      message = "パスワードが間違っています。";
-      alert(message);
-      return;
-    }
+        // アラートが表示された後に画面遷移
+        alert(message);
+        console.log(login_data);
+        const user = login_data?.libraflow_m_user[0];
+        const obj: UserState = {
+          id: user.m_id,
+          user_code: user.user_code,
+          user_name: user.user_name,
+        };
+        //オブジェクトをJSON文字列に変換
+        const jsonObj = JSON.stringify(obj);
+        sessionStorage.setItem("login", jsonObj);
+        console.log(obj);
+        isLoggedIn(obj);
 
-    message = "ログインしました。";
-
-    // アラートが表示された後に画面遷移
-    alert(message);
-
-    update_user_id(data.libraflow_m_user[0].id);
-    update_user_code(data.libraflow_m_user[0].user_code);
-    update_user_name(data.libraflow_m_user[0].user_name);
-
-    setTimeout(() => {
-      navigate("/main/");
-    }, 500);
+        setTimeout(() => {
+          navigate("/main/");
+        }, 500);
+      });
+    }); // ユーザーコードがあるかの確認
   };
 
   return (

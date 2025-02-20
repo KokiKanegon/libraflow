@@ -1,5 +1,11 @@
 import { FormEventHandler, useCallback, useEffect, useState } from "react";
-import { gql, useQuery, useMutation, useLazyQuery } from "@apollo/client";
+import {
+  gql,
+  useQuery,
+  useMutation,
+  useLazyQuery,
+  useReactiveVar,
+} from "@apollo/client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 // import { useParams } from "react-router-dom";
@@ -21,8 +27,8 @@ import {
   TableRow,
 } from "./components/ui/table";
 import { Checkbox } from "./components/ui/checkbox";
-import { set } from "react-hook-form";
-// import { set } from "react-hook-form";
+import { isLoggedIn } from "./main";
+import { useNavigate } from "react-router-dom";
 // import { graphql } from "./gql/gql";
 
 // クエリ部分
@@ -79,6 +85,7 @@ function dateFormat(today: any, format: any) {
 }
 
 export default function BookReturn() {
+  const navigate = useNavigate();
   // 管理するステート
   // 1. ユーザーコード
   const [searchUserCode, set_searchUserCode] = useState<string>("");
@@ -94,6 +101,20 @@ export default function BookReturn() {
     m_user_id: "",
     return_date: dateFormat(new Date(), "YYYY-MM-DD"),
   });
+
+  // 現在のログイン情報を保持するリアクティブ変数。
+  type UserState = {
+    id: string;
+    user_code: string;
+    user_name: string;
+  } | null;
+
+  const login: UserState = useReactiveVar(isLoggedIn);
+  useEffect(() => {
+    if (login) {
+      getuserquery({ variables: { user_code: login.user_code } });
+    }
+  }, []);
 
   useEffect(() => {
     if (formState.m_user_id) {
@@ -150,9 +171,9 @@ export default function BookReturn() {
   // 3. 返却機能（Update）
   const [returnRegistration] = useMutation(RETURN_BOOK);
 
-  const clickOnSubmit: React.MouseEventHandler<HTMLButtonElement> = async (
-    e
-  ) => {
+  const clickOnSubmit: React.MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
     if (return_id_list.length === 0) {
       alert("No book selected.");
       return;
@@ -189,6 +210,8 @@ export default function BookReturn() {
         ...prev,
         m_user_id: userData.libraflow_m_user[0].id,
       }));
+
+      navigate(0);
     } catch (err) {
       console.error("Error updating book:", err);
       alert("An error occurred while updating the book.");

@@ -1,37 +1,48 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useReactiveVar } from "@apollo/client";
 import "./App.css";
-import { Button } from "./components/ui/button";
+import { Label } from "@/components/ui/label.tsx";
+import { isLoggedIn } from "@/main";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0);
-
+export default function App() {
+  const login = useReactiveVar(isLoggedIn);
+  const navigate = useNavigate();
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
+      <div className="flex items-center flex-col gap-4">
+        <p className="text-2xl font-bold mb-4">
+          {login?.user_name ?? "ゲスト"}さん
         </p>
+        <p className="text-2xl font-bold mb-4">ようこそ、ミネルバの森へ</p>
+        <img
+          src="https://cdn.jalan.jp/jalan/img/6/kuchikomi/4526/KL/07e91_0004526201_1.jpeg"
+          alt="ミネルバの森"
+          className="w-full h-auto"
+        />
+        <Label>画像は武雄市美術館</Label>
+        <Label></Label>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <Button>Button</Button>
+      <div className="flex  items-center flex-col gap-4">
+        <Button
+          className="h-16 w-40 "
+          onClick={() => {
+            navigate("/register/");
+          }}
+          key="borrow_book"
+        >
+          本を借りる
+        </Button>
+        <Button
+          className="h-16 w-40"
+          onClick={() => {
+            navigate("/return/");
+          }}
+          key="return_book"
+        >
+          本を返す
+        </Button>
+      </div>
     </>
   );
 }
-
-export default App;

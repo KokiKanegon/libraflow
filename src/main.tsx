@@ -3,7 +3,12 @@ import App from "./App.tsx";
 import LoginForm from "./LoginPage.tsx";
 import Bookinfo from "./BookInfomation.tsx";
 import MyPage from "./MyPage.tsx";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloProvider,
+  makeVar,
+} from "@apollo/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import BookEditor from "./BookEditor.tsx";
 import Layout from "./Layout.tsx";
@@ -16,26 +21,18 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
-type State = {
-  user_id: string;
+// 現在のログイン情報を保持するリアクティブ変数。
+type UserState = {
+  id: string;
   user_code: string;
   user_name: string;
-};
+} | null;
 
-type Action = {
-  update_user_id: (firstName: State["user_id"]) => void;
-  update_user_code: (firstName: State["user_code"]) => void;
-  update_user_name: (firstName: State["user_name"]) => void;
-};
+const login_str = sessionStorage.getItem("login");
+const loginState: UserState = login_str ? JSON.parse(login_str) : null;
 
-export const loginState = create<State & Action>((set) => ({
-  user_id: "",
-  user_code: "",
-  user_name: "",
-  update_user_id: (user_id) => set({ user_id }),
-  update_user_code: (user_code) => set({ user_code }),
-  update_user_name: (user_name) => set({ user_name }),
-}));
+export const isLoggedIn = makeVar<UserState>(loginState);
+console.log(isLoggedIn);
 
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={client}>
