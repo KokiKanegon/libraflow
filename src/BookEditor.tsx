@@ -20,6 +20,7 @@ import {
 import { Label } from "./components/ui/label";
 import { ChangeEventHandler } from "react";
 import { Textarea } from "./components/ui/textarea";
+import { valueFromAST } from "graphql";
 // import { graphql } from "./gql/gql";
 
 const GET_BOOK_BY_CODE = gql(`
@@ -80,8 +81,29 @@ const UPDATE_BOOK = gql(`
   }
 `);
 
+const getData = async (isbn_code: string) => {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn_code}&startIndex=0&maxResults=1&key=AIzaSyD2M7ql17oRiu5XUkP5aTPjzOkcuToQHOE`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error("Oops, something went wrong:", error);
+  }
+};
+
 function BookEditor() {
   const { book_code_on_url } = useParams(); // URLから book_code を取得
+  const [searchISBNCode, setSearchISBNCode] = useState("");
+  const [imgSrc, setImgSrc] = useState("");
   const [formState, setFormState] = useState({
     id: "",
     title: "",
@@ -108,6 +130,50 @@ function BookEditor() {
     const { name, value } = e.target;
     console.log(name, value, formState.book_code);
     setFormState({ ...formState, [name]: value });
+  };
+
+  const handleChangeISBN: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const { name, value } = e.target;
+    setSearchISBNCode(value);
+  };
+
+  const clickOnSearchISNBCode: React.MouseEventHandler<
+    HTMLButtonElement
+  > = async (e) => {
+    try {
+      const data_bookinfo = await getData(searchISBNCode.replace(/-/g, ""));
+      console.log("検索結果:", data_bookinfo);
+
+      // `data_bookinfo` の中身を確認して適切なデータを取り出す
+      if (
+        data_bookinfo &&
+        data_bookinfo.items &&
+        data_bookinfo.items.length > 0
+      ) {
+        const book = data_bookinfo.items[0].volumeInfo;
+        // 📌 Fix: Ensure `yyyy-MM-dd` format by appending "-01" if needed
+        let publicationDate = book.publishedDate || "";
+        if (/^\d{4}-\d{2}$/.test(publicationDate)) {
+          publicationDate += "-01"; // Convert "yyyy-MM" to "yyyy-MM-01"
+        }
+
+        setFormState((prev) => ({
+          ...prev,
+          title: book.title || "",
+          author: book.authors ? book.authors.join(", ") : "",
+          publisher: book.publisher || "",
+          publication_date: publicationDate || "",
+          isbn_code: searchISBNCode.replace(/-/g, ""),
+          note: book.description,
+        }));
+        setImgSrc(book.imageLinks.thumbnail);
+        console.log("書籍情報が更新されました:", book);
+      } else {
+        console.warn("書籍情報が見つかりませんでした。");
+      }
+    } catch (error) {
+      console.error("書籍情報の取得に失敗しました:", error);
+    }
   };
 
   const clickOnSubmit: React.MouseEventHandler<HTMLButtonElement> = (e) => {
@@ -170,6 +236,26 @@ function BookEditor() {
       {formState && (
         <div className="space-y-4">
           <div className="flex flex-col space-y-1.5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">ISBNで取得</CardTitle>
+                <CardDescription>
+                  ISBNコードを読み取ってください。
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  name="isbn_code"
+                  placeholder="input ISBN Code"
+                  value={searchISBNCode}
+                  onChange={handleChangeISBN}
+                  required
+                />
+                <Button onClick={clickOnSearchISNBCode}>
+                  ISBNコードで検索する
+                </Button>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Editor</CardTitle>
@@ -279,21 +365,13 @@ function BookEditor() {
                     });
                   }}
                 />
-                {/* 書影取得 with 国会図書館 */}
-                <Label htmlFor="name">Thumbnail</Label>
-                <img
-                  className="thumbnail"
-                  src={`https://ndlsearch.ndl.go.jp/thumbnail/${formState.isbn_code.replace(
-                    /-/g,
-                    ""
-                  )}.jpg`}
-                  alt="...image not found with 国会図書館"
-                />
                 {/* 書影取得 with GoogleBooksAPI */}
+                <Label>書影</Label>
                 <img
-                  className="thumbnail"
-                  src="http://books.google.com/books/content?id=affuzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+                  className="thumbnail to-50%"
+                  src={imgSrc}
                   alt="...image not found"
+                  width={"50%"}
                 />
                 <Button
                   type="submit"
