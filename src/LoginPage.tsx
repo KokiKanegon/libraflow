@@ -74,14 +74,13 @@ export default function LoginForm({
     skip: !form.userCode, // ユーザーコードが入力されるまでクエリを実行しない
   });
 
-  const {
-    data: login_data,
-    error: login_error,
-    refetch: refetch_login,
-  } = useQuery(GET_USER_LOGIN, {
-    variables: { user_code: form.userCode, pw: form.pw },
-    skip: !form.userCode, // ユーザーコードが入力されるまでクエリを実行しない
-  });
+  const { data: login_data, refetch: refetch_login } = useQuery(
+    GET_USER_LOGIN,
+    {
+      variables: { user_code: form.userCode, pw: form.pw },
+      skip: !form.userCode, // ユーザーコードが入力されるまでクエリを実行しない
+    }
+  );
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // デフォルトの送信動作を防ぐ

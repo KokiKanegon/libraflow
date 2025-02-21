@@ -1,11 +1,5 @@
-import { FormEventHandler, useCallback, useEffect, useState } from "react";
-import {
-  gql,
-  useQuery,
-  useMutation,
-  useLazyQuery,
-  useReactiveVar,
-} from "@apollo/client";
+import { useEffect, useState } from "react";
+import { gql, useMutation, useLazyQuery, useReactiveVar } from "@apollo/client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 // import { useParams } from "react-router-dom";

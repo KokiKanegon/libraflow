@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
-import LoginForm from "./LoginPage.tsx";
+import LoginForm from "./LoginPage";
 import Bookinfo from "./BookInfomation.tsx";
-import MyPage from "./MyPage.tsx";
+import MyPage from "./MyPage";
 import {
   ApolloClient,
   InMemoryCache,
@@ -10,11 +10,11 @@ import {
   makeVar,
 } from "@apollo/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import BookEditor from "./BookEditor.tsx";
-import Layout from "./Layout.tsx";
+import BookEditor from "./BookEditor";
+import Layout from "./Layout";
 import BookRegister from "./BookRegister.tsx";
 import BookReturn from "./BookReturn.tsx";
-import { create } from "zustand";
+import Settings from "./Settings.js";
 
 const client = new ApolloClient({
   uri: "http://localhost:8080/v1/graphql",
@@ -32,20 +32,21 @@ const login_str = sessionStorage.getItem("login");
 const loginState: UserState = login_str ? JSON.parse(login_str) : null;
 
 export const isLoggedIn = makeVar<UserState>(loginState);
-console.log(isLoggedIn);
 
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={client}>
     <BrowserRouter basename="/libraflow">
       <Layout>
         <Routes>
+          <Route path="/main" element={<App />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/bookinfo" element={<Bookinfo />} />
           <Route path="/edit/:book_code_on_url" element={<BookEditor />} />
+          <Route path="/newbooks/" element={<BookEditor />} />
           <Route path="/register/" element={<BookRegister />} />
           <Route path="/return/" element={<BookReturn />} />
-          <Route path="/MyPage" element={<MyPage />} />
-          <Route path="/main" element={<App />} />
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Layout>
     </BrowserRouter>

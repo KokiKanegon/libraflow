@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -42,7 +41,7 @@ function BookInfo() {
         <Button>Search</Button>
       </div>
       <ul className="space-y-4">
-        {data.libraflow_t_book.map((book) => (
+        {data.libraflow_t_book.map((book: any) => (
           <li key={book.book_code} className="p-4 border rounded-lg shadow">
             <h2 className="text-lg font-semibold">{book.title}</h2>
             <p className="text-sm text-gray-600">Author: {book.author}</p>

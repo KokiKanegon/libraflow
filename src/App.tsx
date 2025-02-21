@@ -12,7 +12,7 @@ export default function App() {
     <>
       <div className="flex items-center flex-col gap-4">
         <p className="text-2xl font-bold mb-4">
-          {login?.user_name ?? "ゲスト"}さん
+          {login?.user_name !== "" ? login?.user_name : "ゲスト"}さん
         </p>
         <p className="text-2xl font-bold mb-4">ようこそ、ミネルバの森へ</p>
         <img

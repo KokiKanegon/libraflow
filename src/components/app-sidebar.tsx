@@ -9,6 +9,8 @@ import {
   BookDashed,
   BookCopyIcon,
   BookDashedIcon,
+  DoorClosed,
+  DoorOpen,
 } from "lucide-react";
 
 import {
@@ -21,11 +23,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { SidebarHeader } from "./ui/sidebar";
+import { SidebarFooter, SidebarHeader } from "./ui/sidebar";
 import { isLoggedIn } from "@/main";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useReactiveVar } from "@apollo/client";
+import { useNavigate } from "react-router-dom";
+
+type UserState = {
+  id: string;
+  user_code: string;
+  user_name: string;
+} | null;
 
 // Menu items.
 const items = [
@@ -33,11 +42,6 @@ const items = [
     title: "Main",
     url: "/libraflow/main",
     icon: Home,
-  },
-  {
-    title: "Login",
-    url: "/libraflow/login",
-    icon: LogIn,
   },
   {
     title: "Book Information",
@@ -61,18 +65,19 @@ const items = [
   },
   {
     title: "MyPage",
-    url: "/libraflow/testpage",
+    url: "/libraflow/mypage",
     icon: Book,
   },
   {
     title: "Settings",
-    url: "libraflow/#",
+    url: "/libraflow/settings",
     icon: Settings,
   },
 ];
 
 // Sidebar component.
 export function AppSidebar() {
+  const navigate = useNavigate();
   const login = useReactiveVar(isLoggedIn);
   console.log(login);
   return (
@@ -82,7 +87,9 @@ export function AppSidebar() {
           <SidebarMenuButton>
             <div className="flex flex-col gap-0.5 leading-none">
               <span className="font-semibold">Libraflow</span>
-              <span className="">{login?.user_name ?? "ゲスト"}さん</span>
+              <span className="">
+                {login?.user_name !== "" ? login?.user_name : "ゲスト"}さん
+              </span>
             </div>
           </SidebarMenuButton>
         </SidebarHeader>
@@ -105,6 +112,38 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+        <SidebarFooter>
+          {login?.user_name ? (
+            <SidebarMenuButton
+              onClick={() => {
+                const obj: UserState = {
+                  id: "",
+                  user_code: "",
+                  user_name: "",
+                };
+                // オブジェクトをJSON文字列に変換
+                const jsonObj = JSON.stringify(obj);
+                sessionStorage.setItem("login", jsonObj);
+                isLoggedIn(obj);
+
+                alert("ログアウトしました");
+                navigate("./main/");
+              }}
+            >
+              <DoorClosed />
+              <span>ログアウト</span>
+            </SidebarMenuButton>
+          ) : (
+            <SidebarMenuButton
+              onClick={() => {
+                navigate("./login/");
+              }}
+            >
+              <DoorOpen />
+              <span>ログイン</span>
+            </SidebarMenuButton>
+          )}
+        </SidebarFooter>
       </Sidebar>
     </>
   );
