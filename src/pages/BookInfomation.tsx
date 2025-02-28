@@ -2,60 +2,86 @@ import { gql, useQuery } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router-dom";
-
-const GET_REPOSITORIES = gql`
-  query MyQuery {
-    libraflow_t_book {
-      id
-      book_code
-      title
-      author
-      isbn_code
-      m_category_id
-      m_storage_location_id
-      update_date
-      create_date
-      _is_delete
-      note
-      publisher
-      publication_date
-    }
-  }
-`;
+import { q_SEARCH_BOOK } from "../gql/querys";
+import { useEffect, useState } from "react";
+import BookItem from "../components/bookitem";
+import { BookProps } from "../types";
 
 function BookInfo() {
   const navigate = useNavigate();
-  const { loading, error, data } = useQuery(GET_REPOSITORIES);
+  const SEARCH_BOOK = gql(q_SEARCH_BOOK);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-  if (!data?.libraflow_t_book || data.libraflow_t_book.length === 0) {
-    return <p>No books found.</p>;
-  }
+  // 検索フォームの状態
+  const [formState, setFormState] = useState({
+    searchCode: "",
+    searchWord: "",
+  });
+
+  // 書籍検索結果を格納する状態
+  const [bookInfoList, setBookInfoList] = useState([]);
+
+  // GraphQL のクエリ
+  const { refetch } = useQuery(SEARCH_BOOK, {});
+
+  useEffect(() => {
+    handleSearch();
+  }, []);
+
+  // 検索ボタンクリック時の処理
+  const handleSearch = async () => {
+    const { searchCode, searchWord } = formState;
+
+    try {
+      const result = await refetch({
+        searchCode: searchCode ? `%${searchCode}%` : "%", // 空の場合はすべてに一致
+        searchTitle: searchWord ? `%${searchWord}%` : "%", // 空の場合はすべてに一致
+      });
+
+      setBookInfoList(result.data?.libraflow_t_book || []); // 結果をセット
+    } catch (error) {
+      console.error("検索エラー:", error);
+    }
+  };
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Book Information</h1>
-      <div className="flex gap-4 mb-4">
-        <Input placeholder="Search books..." className="flex-1" />
-        <Button>Search</Button>
+      <div className="flex gap-4 mb-10">
+        <Input
+          placeholder="Book Code"
+          className="flex-1"
+          id="bookcode"
+          value={formState.searchCode}
+          onChange={(e) =>
+            setFormState({ ...formState, searchCode: e.target.value })
+          }
+        />
+        <Input
+          placeholder="Keyword"
+          className="flex-1"
+          id="title"
+          value={formState.searchWord}
+          onChange={(e) =>
+            setFormState({ ...formState, searchWord: e.target.value })
+          }
+        />
+        <Button onClick={handleSearch}>Search</Button>
       </div>
+
       <ul className="space-y-4">
-        {data.libraflow_t_book.map((book: any) => (
-          <li key={book.book_code} className="p-4 border rounded-lg shadow">
-            <h2 className="text-lg font-semibold">{book.title}</h2>
-            <p className="text-sm text-gray-600">Author: {book.author}</p>
-            <p className="text-sm text-gray-500">Note: {book.note}</p>
-            <p className="text-sm text-gray-500">Publisher: {book.publisher}</p>
-            <p className="text-sm text-gray-500">
-              PublicationDate: {book.publication_date}
-            </p>
-            <p className="text-sm text-gray-500">ISBN: {book.isbn_code}</p>
-            <Button onClick={() => navigate(`/edit/${book.book_code}`)}>
-              編集
-            </Button>
-          </li>
-        ))}
+        {bookInfoList.map((book: BookProps["book"]) => {
+          return (
+            <div className="flex justify-between">
+              <BookItem key={book.id} book={book} />
+              <Button
+                className="place-self-center"
+                onClick={() => navigate(`/edit/${book.id}`)}
+              >
+                編集
+              </Button>
+            </div>
+          );
+        })}
       </ul>
     </div>
   );

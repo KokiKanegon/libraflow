@@ -28,3 +28,31 @@ export const q_GET_USER_LOGIN = `
     }
   }
 `;
+
+// 書籍検索用クエリ (book_code または title の部分一致)
+export const q_SEARCH_BOOK = `
+  query MyQuery($searchCode: String!,$searchTitle: String!) {
+    libraflow_t_book(
+      where: {
+        _and: [
+          { book_code: { _like: $searchCode} },
+          { title: { _like: $searchTitle } }
+        ]
+      }
+    ) {
+      id
+      book_code
+      title
+      author
+      isbn_code
+      m_category_id
+      m_storage_location_id
+      update_date
+      create_date
+      _is_delete
+      note
+      publisher
+      publication_date
+    }
+  }
+`;
