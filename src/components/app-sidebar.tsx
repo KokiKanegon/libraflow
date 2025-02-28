@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useReactiveVar } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
+import { useLogout } from "./logout";
 
 type UserState = {
   id: string;
@@ -79,7 +80,7 @@ const items = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const login = useReactiveVar(isLoggedIn);
-  console.log(login);
+  const logout = useLogout();
   return (
     <>
       <Sidebar>
@@ -87,9 +88,7 @@ export function AppSidebar() {
           <SidebarMenuButton>
             <div className="flex flex-col gap-0.5 leading-none">
               <span className="font-semibold">Libraflow</span>
-              <span className="">
-                {login?.user_name !== "" ? login?.user_name : "ゲスト"}さん
-              </span>
+              <span className="">{login ? login.user_name : "ゲスト"}さん</span>
             </div>
           </SidebarMenuButton>
         </SidebarHeader>
@@ -114,24 +113,9 @@ export function AppSidebar() {
         </SidebarContent>
         <SidebarFooter>
           {login?.user_name ? (
-            <SidebarMenuButton
-              onClick={() => {
-                const obj: UserState = {
-                  id: "",
-                  user_code: "",
-                  user_name: "",
-                };
-                // オブジェクトをJSON文字列に変換
-                const jsonObj = JSON.stringify(obj);
-                sessionStorage.setItem("login", jsonObj);
-                isLoggedIn(obj);
-
-                alert("ログアウトしました");
-                navigate("./main/");
-              }}
-            >
+            <SidebarMenuButton onClick={logout}>
               <DoorClosed />
-              <span>ログアウト</span>
+              <span>Log out</span>
             </SidebarMenuButton>
           ) : (
             <SidebarMenuButton
@@ -140,7 +124,7 @@ export function AppSidebar() {
               }}
             >
               <DoorOpen />
-              <span>ログイン</span>
+              <span>Log in</span>
             </SidebarMenuButton>
           )}
         </SidebarFooter>

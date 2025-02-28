@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { gql, useMutation, useLazyQuery, useReactiveVar } from "@apollo/client";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 // import { useParams } from "react-router-dom";
 import {
   Card,
@@ -10,8 +10,8 @@ import {
   // CardDescription,
   // CardHeader,
   // CardTitle,
-} from "./components/ui/card";
-import { Label } from "./components/ui/label";
+} from "../components/ui/card";
+import { Label } from "../components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,9 +19,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./components/ui/table";
-import { Checkbox } from "./components/ui/checkbox";
-import { isLoggedIn } from "./main";
+} from "../components/ui/table";
+import { Checkbox } from "../components/ui/checkbox";
+import { isLoggedIn } from "../main";
 import { useNavigate } from "react-router-dom";
 // import { graphql } from "./gql/gql";
 
