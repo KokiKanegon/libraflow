@@ -34,9 +34,6 @@ const BookItem: React.FC<BookProps> = ({ book }) => {
           <p className="text-gray-600 text-right">Author:</p>
           <p className="text-gray-800 text-left">{book.author}</p>
 
-          <p className="text-gray-500 text-right">Note:</p>
-          <p className="text-gray-700 text-left">{book.note}</p>
-
           <p className="text-gray-500 text-right">Publisher:</p>
           <p className="text-gray-700 text-left">{book.publisher}</p>
 
@@ -45,6 +42,14 @@ const BookItem: React.FC<BookProps> = ({ book }) => {
 
           <p className="text-gray-500 text-right">ISBN:</p>
           <p className="text-gray-700 text-left">{book.isbn_code}</p>
+
+          <p className="text-gray-500 text-right">Note:</p>
+          <p className="text-gray-700 text-left">
+            {book.note
+              ? book.note.toString().slice(0, 100) +
+                (book.note.length > 100 ? "..." : "")
+              : ""}
+          </p>
         </div>
       </div>
     </li>
