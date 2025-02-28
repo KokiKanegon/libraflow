@@ -27,23 +27,28 @@ const loginState: typeUserState = login_str ? JSON.parse(login_str) : null;
 
 export const isLoggedIn = makeVar<typeUserState>(loginState);
 
-createRoot(document.getElementById("root")!).render(
-  <ApolloProvider client={client}>
-    <BrowserRouter basename="/libraflow">
-      <Layout>
-        <Routes>
-          <Route path="/main" element={<App />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/bookinfo" element={<Bookinfo />} />
-          <Route path="/edit/:book_code_on_url" element={<BookEditor />} />
-          <Route path="/newbook/" element={<BookEditor />} />
-          <Route path="/register/" element={<BookRegister />} />
-          <Route path="/return/" element={<BookReturn />} />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/*" element={<App />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
-  </ApolloProvider>
-);
+const rootElement = document.getElementById("root");
+
+//都度のrerenderをストップするためのif文
+if (rootElement !== null && rootElement.childNodes.length === 0) {
+  createRoot(rootElement!).render(
+    <ApolloProvider client={client}>
+      <BrowserRouter basename="/libraflow">
+        <Layout>
+          <Routes>
+            <Route path="/main" element={<App />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/bookinfo" element={<Bookinfo />} />
+            <Route path="/edit/:book_code_on_url" element={<BookEditor />} />
+            <Route path="/newbook/" element={<BookEditor />} />
+            <Route path="/register/" element={<BookRegister />} />
+            <Route path="/return/" element={<BookReturn />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/*" element={<App />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </ApolloProvider>
+  );
+}

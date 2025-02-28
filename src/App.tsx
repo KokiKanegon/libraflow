@@ -13,42 +13,40 @@ export default function App() {
   const logout = useLogout();
   return (
     <>
-      <div className="flex items-center flex-col gap-4">
-        <p className="text-2xl font-bold mb-4">
-          {login ? login.user_name : "ゲスト"}さん
-        </p>
-        <p className="text-2xl font-bold mb-4">ようこそ、ミネルバの森へ</p>
-        <img
-          src="https://cdn.jalan.jp/jalan/img/6/kuchikomi/4526/KL/07e91_0004526201_1.jpeg"
-          alt="ミネルバの森"
-          className="w-full h-auto rounded-2xl"
-        />
-        <Label>画像は武雄市美術館</Label>
-        <Label></Label>
-      </div>
-      <div className="flex place-content-center">
-        <div className="flex gap-4">
-          <Button
-            className="h-16 w-40 "
-            onClick={() => {
-              navigate("/register/");
-            }}
-            key="borrow_book"
-          >
-            本を借りる
-          </Button>
-          <Button
-            className="h-16 w-40"
-            onClick={() => {
-              navigate("/return/");
-            }}
-            key="return_book"
-          >
-            本を返す
-          </Button>
-          {login === null ? (
-            <>
-              {" "}
+      <div className="place-content-center items-center flex-col">
+        <div className="place-content-center items-center flex-col gap-4">
+          <h1 className="text-2xl font-bold mb-4">
+            {login ? login.user_name : "ゲスト"}さん
+          </h1>
+          <p className="text-xl font-bold mb-4">ようこそ、ミネルバの森へ</p>
+          <img
+            src="https://cdn.jalan.jp/jalan/img/6/kuchikomi/4526/KL/07e91_0004526201_1.jpeg"
+            alt="ミネルバの森"
+            className="h-auto w-auto rounded-2xl mx-auto"
+          />
+          <Label>画像は武雄市美術館</Label>
+        </div>
+        <div className="flex place-content-center py-4">
+          <div className="flex gap-4">
+            <Button
+              className="h-16 w-40 "
+              onClick={() => {
+                navigate("/register/");
+              }}
+              key="borrow_book"
+            >
+              本を借りる
+            </Button>
+            <Button
+              className="h-16 w-40"
+              onClick={() => {
+                navigate("/return/");
+              }}
+              key="return_book"
+            >
+              本を返す
+            </Button>
+            {login === null ? (
               <Button
                 className="h-16 w-40"
                 onClick={() => {
@@ -56,17 +54,14 @@ export default function App() {
                 }}
                 key="login"
               >
-                ログインする
+                ログイン
               </Button>
-            </>
-          ) : (
-            <>
-              {" "}
+            ) : (
               <Button className="h-16 w-40" onClick={logout} key="login">
-                ログアウトする
+                ログアウト
               </Button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </>
