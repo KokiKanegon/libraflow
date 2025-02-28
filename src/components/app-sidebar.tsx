@@ -40,8 +40,8 @@ type UserState = {
 // Menu items.
 const items = [
   {
-    title: "Main",
-    url: "/libraflow/main",
+    title: "Home",
+    url: "/libraflow/home",
     icon: Home,
   },
   {

@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import Home from "./pages/Home.js";
 import LoginForm from "./pages/LoginPage";
 import Bookinfo from "./pages/BookInfomation";
 import MyPage from "./pages/MyPage";
@@ -27,16 +27,15 @@ const loginState: typeUserState = login_str ? JSON.parse(login_str) : null;
 
 export const isLoggedIn = makeVar<typeUserState>(loginState);
 
-const rootElement = document.getElementById("root");
-
 //都度のrerenderをストップするためのif文
+const rootElement = document.getElementById("root");
 if (rootElement !== null && rootElement.childNodes.length === 0) {
   createRoot(rootElement!).render(
     <ApolloProvider client={client}>
       <BrowserRouter basename="/libraflow">
         <Layout>
           <Routes>
-            <Route path="/main" element={<App />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/bookinfo" element={<Bookinfo />} />
             <Route path="/edit/:book_code_on_url" element={<BookEditor />} />
@@ -45,7 +44,7 @@ if (rootElement !== null && rootElement.childNodes.length === 0) {
             <Route path="/return/" element={<BookReturn />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/*" element={<App />} />
+            <Route path="/*" element={<Home />} />
           </Routes>
         </Layout>
       </BrowserRouter>
