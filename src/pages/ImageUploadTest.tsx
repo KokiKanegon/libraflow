@@ -10,7 +10,7 @@ const UPLOAD_IMAGE_MUTATION = gql`
   mutation UploadImage(
     $file_data: bytea!
     $t_book_id: uuid!
-    $is_url: boolean!
+    $is_url: Boolean!
   ) {
     insert_libraflow_t_book_image(
       objects: [
@@ -60,6 +60,19 @@ const base64ToHex = (base64: string): string => {
   return Array.from(binary)
     .map((char) => char.charCodeAt(0).toString(16).padStart(2, "0"))
     .join("");
+};
+
+const hexToString = (hex: string): string => {
+  // `\x` を削除
+  const cleanHex = hex.startsWith("\\x") ? hex.slice(2) : hex;
+
+  // HEX → 文字列変換
+  return decodeURIComponent(
+    cleanHex
+      .match(/.{1,2}/g)!
+      .map((byte) => String.fromCharCode(parseInt(byte, 16)))
+      .join("")
+  );
 };
 
 const fetchImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
@@ -112,33 +125,32 @@ const ImageUploadTest: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const uploadData = (flg: boolean) => {
-    // GraphQL で画像アップロード
-    if (!flg) {
-      uploadImage({
+  const uploadData = async (isUrlUpload: boolean) => {
+    try {
+      await uploadImage({
         variables: {
-          file_data: `\\x${base64ToHex(form.uploadData)}`, // 修正済みのHEX変換
+          file_data: isUrlUpload
+            ? imageUrl
+            : `\\x${base64ToHex(form.uploadData)}`,
           t_book_id: form.bookId,
-          is_url: false,
+          is_url: isUrlUpload,
         },
       });
-    } else {
-      uploadImage({
-        variables: {
-          file_data: imageUrl,
-          t_book_id: form.bookId,
-          is_url: true,
-        },
-      });
+      refetch();
+      alert("画像を保存しました");
+    } catch (error) {
+      console.error("画像のアップロードに失敗しました", error);
     }
-    refetch(); // アップロード後に画像を再取得
   };
 
-  // 画像データが取得できたら Base64 に変換
-  const imageSrc = () => {
-    return data?.t_book_image[0]?.file_data
-      ? hexToBase64(data.t_book_image[0].file_data)
-      : "";
+  const pickData = async () => {
+    try {
+      await refetch();
+      console.log(data);
+      console.log("データ表示");
+      console.log(hexToString(data.libraflow_t_book_image[0].file_data));
+      console.log("データ表示完了");
+    } catch {}
   };
 
   return (
@@ -183,10 +195,14 @@ const ImageUploadTest: React.FC = () => {
           />
         </div>
       )}
-      {imageSrc() !== "" && (
+      {form.uploadData !== "" && (
         <div>
           <p>アップロードされた画像:</p>
-          <img src={imageSrc()} alt="Uploaded" style={{ maxWidth: "300px" }} />
+          <img
+            src={form.uploadData}
+            alt="Uploaded"
+            style={{ maxWidth: "300px" }}
+          />
         </div>
       )}
 
@@ -227,6 +243,16 @@ const ImageUploadTest: React.FC = () => {
           }}
         >
           Google Books のURLを保存
+        </Button>
+
+        <Button
+          className="m-2"
+          id="saveUrlBtn"
+          onClick={() => {
+            pickData();
+          }}
+        >
+          データを取り出す with id
         </Button>
       </div>
     </div>
