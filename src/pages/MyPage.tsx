@@ -9,7 +9,7 @@ function MyPage() {
   return (
     <>
       <div>
-        <p>Wellcome to Book Infomation Page</p>
+        <h1 className="text-8xl">Comming Soon</h1>
         <a href="https://react.dev" target="_blank">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
