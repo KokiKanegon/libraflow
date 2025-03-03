@@ -75,22 +75,6 @@ const hexToString = (hex: string): string => {
   );
 };
 
-const fetchImageAsBase64 = async (imageUrl: string): Promise<string | null> => {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("画像の取得エラー:", error);
-    return null;
-  }
-};
-
 // 本体処理--------------------------------------------
 const ImageUploadTest: React.FC = () => {
   const [form, setForm] = useState({
