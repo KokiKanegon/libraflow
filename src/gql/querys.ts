@@ -56,3 +56,103 @@ export const q_SEARCH_BOOK = `
     }
   }
 `;
+
+// 書籍情報の取得
+export const q_GET_BOOK_BY_CODE = `
+  query GetBookByCode($id: uuid!) {
+    libraflow_t_book(where: { id: { _eq: $id } }) {
+      id
+      book_code
+      title
+      author
+      isbn_code
+      m_category_id
+      m_storage_location_id
+      note
+      publisher
+      publication_date
+    }
+    libraflow_m_storage_location(order_by: { index: asc }) {
+      id
+      storage_location_name
+      index
+    }
+    libraflow_m_category {
+      id
+      category_name
+    }
+  }
+`;
+
+// 画像取得用クエリ
+export const q_GET_BOOK_IMAGE = `
+  query GetBookImage($t_book_id: uuid!) {
+    libraflow_t_book_image(
+      where: { t_book_id: { _eq: $t_book_id } }
+      limit: 1
+    ) {
+      id
+      file_data
+      t_book_id
+      is_url
+    }
+  }
+`;
+
+// 書籍情報アップロード用のクエリ
+export const q_UPDATE_BOOK = `
+  mutation UpdateBook(
+    $id: uuid!
+    $title: String
+    $author: String
+    $book_code : String
+    $isbn_code: String
+    $m_category_id: uuid
+    $m_storage_location_id: uuid
+    $note: String
+    $publisher: String
+    $publication_date: date
+  ) {
+    update_libraflow_t_book_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        title: $title
+        author: $author
+        book_code: $book_code
+        isbn_code: $isbn_code
+        m_category_id: $m_category_id
+        m_storage_location_id: $m_storage_location_id
+        note: $note
+        publisher: $publisher
+        publication_date: $publication_date
+      }
+    ) {
+      id
+    }
+  }
+`;
+
+// 画像のアップロード（insert/update）用ミューテーション
+export const q_UPLOAD_IMAGE_MUTATION = `
+  mutation UploadImage(
+    $file_data: bytea!
+    $t_book_id: uuid!
+    $is_url: Boolean!
+  ) {
+    insert_libraflow_t_book_image(
+      objects: [
+        { file_data: $file_data, t_book_id: $t_book_id, is_url: $is_url }
+      ]
+      on_conflict: {
+        constraint: t_book_image_t_book_id_key
+        update_columns: [file_data, is_url]
+      }
+    ) {
+      returning {
+        id
+        file_data
+        t_book_id
+      }
+    }
+  }
+`;
