@@ -16,6 +16,7 @@ import BookRegister from "./pages/BookRegister.js";
 import BookReturn from "./pages/BookReturn.js";
 import Settings from "./pages/Settings.js";
 import { typeUserState } from "./types.ts";
+import ImageUploadTest from "./pages/ImageUploadTest.tsx";
 
 const client = new ApolloClient({
   uri: "http://localhost:8080/v1/graphql",
@@ -38,12 +39,13 @@ if (rootElement !== null && rootElement.childNodes.length === 0) {
             <Route path="/home" element={<Home />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/bookinfo" element={<Bookinfo />} />
-            <Route path="/edit/:book_code_on_url" element={<BookEditor />} />
+            <Route path="/edit/:book_id_on_url" element={<BookEditor />} />
             <Route path="/newbook/" element={<BookEditor />} />
             <Route path="/register/" element={<BookRegister />} />
             <Route path="/return/" element={<BookReturn />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/imgtest" element={<ImageUploadTest />} />
             <Route path="/*" element={<Home />} />
           </Routes>
         </Layout>

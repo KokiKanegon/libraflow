@@ -24,8 +24,8 @@ import { valueFromAST } from "graphql";
 // import { graphql } from "./gql/gql";
 
 const GET_BOOK_BY_CODE = gql(`
-  query GetBookByCode($book_code: String!) {
-    libraflow_t_book(where: { book_code: { _eq: $book_code } }) {
+  query GetBookByCode($id: uuid!) {
+    libraflow_t_book(where: { id: { _eq: $id } }) {
       id
       book_code
       title
@@ -101,7 +101,7 @@ const getData = async (isbn_code: string) => {
 };
 
 function BookEditor() {
-  const { book_code_on_url } = useParams(); // URLから book_code を取得
+  const { book_id_on_url } = useParams();
   const [searchISBNCode, setSearchISBNCode] = useState("");
   const [imgSrc, setImgSrc] = useState("");
   const [formState, setFormState] = useState({
@@ -117,10 +117,11 @@ function BookEditor() {
     publication_date: "",
   }); // 編集用データ
 
+  console.log(book_id_on_url);
+
   // 書籍データを取得
   const { data, loading, error } = useQuery(GET_BOOK_BY_CODE, {
-    variables: { book_code: book_code_on_url ?? "" },
-    skip: !book_code_on_url, // book_codeがない場合はクエリをスキップ,
+    variables: { id: book_id_on_url ?? "" },
   });
 
   const [updateBook, { loading: updateLoading, error: updateError }] =
@@ -235,9 +236,9 @@ function BookEditor() {
       {/* 編集フォーム */}
       {formState && (
         <div className="space-y-4">
-          <div className="flex flex-col space-y-1.5">
+          <div className="flex flex-col space-y-1.5 p-4 gap-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="gap-4">
                 <CardTitle className="text-2xl">ISBNで取得</CardTitle>
                 <CardDescription>
                   ISBNコードを読み取ってください。
@@ -251,7 +252,7 @@ function BookEditor() {
                   onChange={handleChangeISBN}
                   required
                 />
-                <Button onClick={clickOnSearchISNBCode}>
+                <Button className="m-4" onClick={clickOnSearchISNBCode}>
                   ISBNコードで検索する
                 </Button>
               </CardContent>
@@ -267,6 +268,7 @@ function BookEditor() {
               <CardContent>
                 <Label htmlFor="name">code</Label>
                 <Input
+                  className="mt-2 mb-2"
                   name="book_code"
                   placeholder="Code"
                   value={formState.book_code}
@@ -275,6 +277,7 @@ function BookEditor() {
                 />
                 <Label htmlFor="name">Title</Label>
                 <Input
+                  className="mt-2 mb-2"
                   name="title"
                   placeholder="Title"
                   value={formState.title}
@@ -283,6 +286,7 @@ function BookEditor() {
                 />
                 <Label htmlFor="name">Author</Label>
                 <Input
+                  className="mt-2 mb-2"
                   name="author"
                   placeholder="Author"
                   value={formState.author}
@@ -291,6 +295,7 @@ function BookEditor() {
                 />
                 <Label htmlFor="name">PublicationDate</Label>
                 <Input
+                  className="mt-2 mb-2"
                   type="date"
                   name="publication_date"
                   placeholder="Publication date"
@@ -299,6 +304,7 @@ function BookEditor() {
                 />
                 <Label htmlFor="name">Publisher</Label>
                 <Input
+                  className="mt-2 mb-2"
                   name="publisher"
                   placeholder="Publiser"
                   value={formState.publisher}
@@ -306,13 +312,16 @@ function BookEditor() {
                 />
                 <Label htmlFor="name">ISBNCode</Label>
                 <Input
+                  className="mt-2 mb-2"
                   name="isbn_code"
                   placeholder="ISBN Code"
                   value={formState.isbn_code}
                   onChange={handleChange}
                 />
                 {/* カテゴリ選択（プルダウン） */}
-                <Label htmlFor="name">category</Label>
+                <Label className="mt-2 mb-2" htmlFor="name">
+                  category
+                </Label>
                 <Select
                   value={formState?.m_category_id ?? ""}
                   onValueChange={(value) => {
