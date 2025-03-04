@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -24,16 +24,20 @@ import { Switch } from "../components/ui/switch";
 import {
   q_GET_BOOK_BY_CODE,
   q_GET_BOOK_IMAGE,
+  q_INSERT_BOOK,
   q_UPDATE_BOOK,
   q_UPLOAD_IMAGE_MUTATION,
 } from "../gql/querys";
+import { UUIDTypes, v4 as uuidv4 } from "uuid";
+import { UUID } from "crypto";
 // import { valueFromAST } from "graphql";
 // import { graphql } from "./gql/gql";
 
-const UPLOAD_IMAGE_MUTATION = gql(q_UPLOAD_IMAGE_MUTATION);
 const GET_BOOK_BY_CODE = gql(q_GET_BOOK_BY_CODE);
 const GET_BOOK_IMAGE = gql(q_GET_BOOK_IMAGE);
 const UPDATE_BOOK = gql(q_UPDATE_BOOK);
+const INSERT_BOOK = gql(q_INSERT_BOOK);
+const UPLOAD_IMAGE_MUTATION = gql(q_UPLOAD_IMAGE_MUTATION);
 
 const getGoogleBooksData = async (isbn_code: string) => {
   try {
@@ -84,20 +88,33 @@ const hexToString = (hex: string): string => {
 };
 
 function BookEditor() {
+  const navigate = useNavigate();
+
   const { book_id_on_url } = useParams();
   const [searchISBNCode, setSearchISBNCode] = useState("");
   const [imgSrc, setImgSrc] = useState("");
   const [isURL, setIsURL] = useState<boolean>(true);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
 
-  const [formBook, setFormBook] = useState({
+  const [formBook, setFormBook] = useState<{
+    id: string;
+    title: string;
+    author: string;
+    book_code: string;
+    isbn_code: string;
+    m_category_id: string | null;
+    m_storage_location_id: string | null;
+    note: string;
+    publisher: string;
+    publication_date: string;
+  }>({
     id: "",
     title: "",
     author: "",
     book_code: "",
     isbn_code: "",
-    m_category_id: "",
-    m_storage_location_id: "",
+    m_category_id: null,
+    m_storage_location_id: null,
     note: "",
     publisher: "",
     publication_date: "",
@@ -135,7 +152,7 @@ function BookEditor() {
   const [uploadImage] = useMutation(UPLOAD_IMAGE_MUTATION);
   const [updateBook, { loading: updateLoading, error: updateError }] =
     useMutation(UPDATE_BOOK);
-
+  const [createBook] = useMutation(INSERT_BOOK);
   // 書籍情報のフォーム管理
   const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const { name, value } = e.target;
@@ -208,16 +225,10 @@ function BookEditor() {
   // この制御をうまくやる方法を知りたい
   useEffect(() => {
     if (isFirst) {
-      console.log("B");
       refetchImage();
-      console.log(imgData);
 
       if (imgData && imgData.libraflow_t_book_image.length > 0) {
-        console.log("imgData");
-        console.log(imgData);
-
         const form2 = imgData.libraflow_t_book_image[0];
-        console.log(form2);
 
         setFormImage((prev) => ({
           ...prev,
@@ -246,6 +257,7 @@ function BookEditor() {
   // これ無くしたい
   useEffect(() => {
     setIsURL(formImage.isURL);
+    console.log(formImage);
   }, [formImage.isURL]);
 
   const clickOnSubmit: React.MouseEventHandler<
@@ -258,11 +270,11 @@ function BookEditor() {
         }),
         uploadImage({
           variables: {
-            file_data: formImage.isURL
+            file_data: isURL
               ? imgSrc
               : `\\x${base64ToHex(formImage.uploadData)}`,
             t_book_id: formBook.id,
-            is_url: formImage.isURL,
+            is_url: isURL,
           },
         }),
       ]);
@@ -272,14 +284,77 @@ function BookEditor() {
     }
   };
 
+  const pageInit = () => {
+    navigate(`/edit/new_book`);
+    setFormBook({
+      id: "",
+      title: "",
+      author: "",
+      book_code: "",
+      isbn_code: "",
+      m_category_id: null,
+      m_storage_location_id: null,
+      note: "",
+      publisher: "",
+      publication_date: "",
+    });
+    setFormImage({
+      id: "",
+      uploadData: "",
+      bookId: "",
+      isURL: false,
+    });
+    setImgSrc("");
+  };
+
+  const clickOnCreate = async () => {
+    const newBookId = uuidv4(); // 事前に UUID を生成
+    console.log("Generated UUID:", newBookId);
+
+    setFormBook((prev) => ({ ...prev, id: newBookId }));
+
+    console.log({ ...formBook, id: newBookId });
+
+    // createBook の実行
+    await createBook({
+      variables: { ...formBook, id: newBookId },
+    });
+
+    console.log("Book created");
+
+    console.log(formImage);
+
+    // 画像アップロードの実行
+    await uploadImage({
+      variables: {
+        file_data: isURL ? imgSrc : `\\x${base64ToHex(formImage.uploadData)}`,
+        t_book_id: newBookId, // 事前に生成した UUID を使用
+        is_url: isURL,
+      },
+    });
+
+    alert("Book created successfully!");
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Search and Edit Book</h1>
 
-      {/* 検索の結果 */}
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">Error: {error.message}</p>}
-      {data && data.libraflow_t_book.length === 0 && <p>No book found.</p>}
+      <Button
+        onClick={() => {
+          pageInit();
+        }}
+      >
+        New book register
+      </Button>
+
+      <Button
+        onClick={() => {
+          navigate("/bookinfo/");
+        }}
+      >
+        Back book info
+      </Button>
 
       {/* 編集フォーム */}
       {formBook && (
@@ -488,13 +563,20 @@ function BookEditor() {
                     </div>
                   )}
                 </div>
-
                 <Button
                   type="submit"
                   disabled={updateLoading}
                   onClick={clickOnSubmit}
                 >
                   Update Book
+                </Button>
+                <Button
+                  type="submit"
+                  onClick={() => {
+                    clickOnCreate();
+                  }}
+                >
+                  Creat new book data
                 </Button>
               </CardContent>
             </Card>

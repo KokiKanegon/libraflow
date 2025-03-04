@@ -163,6 +163,39 @@ export const q_UPDATE_BOOK = `
   }
 `;
 
+// 書籍情報挿入用のクエリ
+export const q_INSERT_BOOK = `
+  mutation InsertBook(
+    $id: uuid!
+    $title: String!
+    $author: String!
+    $book_code: String!
+    $isbn_code: String!
+    $m_category_id: uuid
+    $m_storage_location_id: uuid
+    $note: String
+    $publisher: String!
+    $publication_date: date
+  ) {
+    insert_libraflow_t_book_one(
+      object: {
+        id: $id
+        title: $title
+        author: $author
+        book_code: $book_code
+        isbn_code: $isbn_code
+        m_category_id: $m_category_id
+        m_storage_location_id: $m_storage_location_id
+        note: $note
+        publisher: $publisher
+        publication_date: $publication_date
+      }
+    ) {
+      id
+    }
+  }
+`;
+
 // 画像のアップロード（insert/update）用ミューテーション
 export const q_UPLOAD_IMAGE_MUTATION = `
   mutation UploadImage(

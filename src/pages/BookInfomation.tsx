@@ -2,14 +2,13 @@ import { gql, useQuery } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { q_SEARCH_BOOK, q_SEARCH_BOOK_WITH_IMAGE } from "../gql/querys";
+import { q_SEARCH_BOOK_WITH_IMAGE } from "../gql/querys";
 import { useEffect, useState } from "react";
 import BookItem from "../components/bookitem";
 import { BookProps } from "../types";
 
 function BookInfo() {
   const navigate = useNavigate();
-  const SEARCH_BOOK = gql(q_SEARCH_BOOK);
   const SEARCH_BOOK_WITH_IMAGE = gql(q_SEARCH_BOOK_WITH_IMAGE);
 
   // 検索フォームの状態
