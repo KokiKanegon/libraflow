@@ -572,21 +572,24 @@ function BookEditor() {
                     </div>
                   )}
                 </div>
-                <Button
-                  type="submit"
-                  disabled={updateLoading}
-                  onClick={clickOnSubmit}
-                >
-                  Update Book
-                </Button>
-                <Button
-                  type="submit"
-                  onClick={() => {
-                    clickOnCreate();
-                  }}
-                >
-                  Creat new book data
-                </Button>
+                {book_id_on_url === "new_book" ? (
+                  <Button
+                    type="submit"
+                    onClick={() => {
+                      clickOnCreate();
+                    }}
+                  >
+                    Creat new book data
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={updateLoading}
+                    onClick={clickOnSubmit}
+                  >
+                    Update Book
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
