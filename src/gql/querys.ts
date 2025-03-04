@@ -273,3 +273,36 @@ mutation InsertBookRecord(
     }
   }
 `;
+
+// 2. 貸出中の本の表示
+export const q_GET_REGISTER_BY_USER = `
+  query GetBookByUser($m_user_id: uuid!) {
+    libraflow_t_borrow_record(order_by: {borrow_date: asc}, where: {m_user_id: {_eq: $m_user_id}, return_date: {_is_null: true}}) {
+      id
+      t_book {
+      book_code
+      title
+      author
+      isbn_code
+      }
+    }
+  }
+  `;
+
+// 3. 返却機能（Update）
+export const q_RETURN_BOOK = `
+  mutation ReturnBook(
+      $id: [uuid!]
+      $return_date: date!
+    ) {
+      update_libraflow_t_borrow_record(
+        where: {
+          id: {_in: $id}}, 
+          _set: {return_date: $return_date}
+        ) {
+    returning {
+      id
+    }
+  }
+}
+  `;

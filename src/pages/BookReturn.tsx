@@ -23,52 +23,17 @@ import {
 import { Checkbox } from "../components/ui/checkbox";
 import { isLoggedIn } from "../main";
 import { useNavigate } from "react-router-dom";
+import {
+  q_GET_REGISTER_BY_USER,
+  q_GET_USER,
+  q_RETURN_BOOK,
+} from "../gql/querys";
+import { typeUserState } from "../types";
 // import { graphql } from "./gql/gql";
 
-// クエリ部分
-// 1. ユーザー検索クエリ
-const GET_USER = gql(`
-  query GetUserByCode($user_code: String!) {
-  libraflow_m_user(where: {user_code: {_eq: $user_code}}) {
-    id
-    user_code
-    user_name
-  }
-}
-`);
-
-// 2. 貸出中の本の表示
-const GET_REGISTER_BY_USER = gql(`
-  query GetBookByUser($m_user_id: uuid!) {
-    libraflow_t_borrow_record(order_by: {borrow_date: asc}, where: {m_user_id: {_eq: $m_user_id}, return_date: {_is_null: true}}) {
-      id
-      t_book {
-      book_code
-      title
-      author
-      isbn_code
-      }
-    }
-  }
-  `);
-
-// 3. 返却機能（Update）
-const RETURN_BOOK = gql(`
-  mutation ReturnBook(
-      $id: [uuid!]
-      $return_date: date!
-    ) {
-      update_libraflow_t_borrow_record(
-        where: {
-          id: {_in: $id}}, 
-          _set: {return_date: $return_date}
-        ) {
-    returning {
-      id
-    }
-  }
-}
-  `);
+const GET_USER = gql(q_GET_USER);
+const RETURN_BOOK = gql(q_RETURN_BOOK);
+const GET_REGISTER_BY_USER = gql(q_GET_REGISTER_BY_USER);
 
 // function dateFormat -> change date format
 function dateFormat(today: any, format: any) {
@@ -80,30 +45,14 @@ function dateFormat(today: any, format: any) {
 
 export default function BookReturn() {
   const navigate = useNavigate();
-  // 管理するステート
-  // 1. ユーザーコード
   const [searchUserCode, set_searchUserCode] = useState<string>("");
-
-  // 2. 貸出中の本のコードリスト
-  // const [borrow_id_list, set_borrow_id_list] = useState<string[]>([]); // 書籍コードリスト
-
-  // 3. 返却予定の本のリスト
   const [return_id_list, set_return_id_list] = useState<string[]>([]); // 書籍コードリスト
-
-  // 4. ユーザーコードと返却日
   const [formState, setFormState] = useState({
     m_user_id: "",
     return_date: dateFormat(new Date(), "YYYY-MM-DD"),
   });
 
-  // 現在のログイン情報を保持するリアクティブ変数。
-  type UserState = {
-    id: string;
-    user_code: string;
-    user_name: string;
-  } | null;
-
-  const login: UserState = useReactiveVar(isLoggedIn);
+  const login: typeUserState = useReactiveVar(isLoggedIn);
   useEffect(() => {
     if (login) {
       getuserquery({ variables: { user_code: login.user_code } });
@@ -123,7 +72,7 @@ export default function BookReturn() {
   }, [return_id_list]);
 
   // function部分
-  // 1. ユーザー検索
+  // 1. ユーザー検索 TODOログイン機能に変更
   const clickUserSearch = () => {
     if (searchUserCode) {
       getuserquery({ variables: { user_code: searchUserCode } });
@@ -216,105 +165,112 @@ export default function BookReturn() {
     // 画面周り
     <>
       {/* // タイトル表示 */}
-      <div>
+      <div className="space-y-4">
         <h1> Book Return Page</h1>
-        <p> ユーザー情報を入力してください</p>
+        {/* // 1. ユーザー検索 */}
+        <Card className="user-card">
+          <CardHeader>
+            <h1>貸出者情報</h1>
+            {!login && (
+              <div className="flex space-x-2">
+                <Input
+                  placeholder="Search users..."
+                  className="search-user-box"
+                  value={searchUserCode}
+                  onChange={(e) => {
+                    set_searchUserCode(e.target.value);
+                  }}
+                />
+                <Button onClick={clickUserSearch}>Search</Button>
+              </div>
+            )}
+          </CardHeader>
+
+          <CardContent>
+            <Label>UserCode</Label>
+            <Input
+              value={`${userData?.libraflow_m_user[0].user_code || ""}`}
+              readOnly
+            />
+            <Label>UserName</Label>
+            <Input
+              value={`${userData?.libraflow_m_user[0].user_name || ""}`}
+              readOnly
+            />
+          </CardContent>
+        </Card>
+
+        {/* ; // 2. 貸出中の本の表示（返却するものにチェックボックスをつけてそれで返却を制御する） */}
+        <Card>
+          <CardContent>
+            <Label>貸出書籍</Label>
+            {return_id_list.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>選択</TableHead>
+                    <TableHead>コード</TableHead>
+                    <TableHead>タイトル</TableHead>
+                    <TableHead>著者</TableHead>
+                    <TableHead>ISBNコード</TableHead>
+                    <TableHead>貸出中</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData?.libraflow_t_borrow_record?.map((book: any) => (
+                    <TableRow key={book.id}>
+                      <TableCell key={book.id}>
+                        <Checkbox
+                          id={book.id}
+                          onCheckedChange={(e) => {
+                            if (e) {
+                              set_return_id_list((prev) => [...prev, book.id]);
+                            } else {
+                              set_return_id_list((prev) =>
+                                prev.filter((id) => id !== book.id)
+                              );
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>{book.t_book.book_code}</TableCell>
+                      <TableCell>{book.t_book.title}</TableCell>
+                      <TableCell>{book.t_book.author}</TableCell>
+                      <TableCell>{book.t_book.isbn_code}</TableCell>
+                      <TableCell>
+                        {/* {book.t_borrow_records[0].m_user.user_name} */}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <h2 className="text-red-700 text-xl">貸出中の書籍はありません</h2>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* // 3. 返却ボタン（返却処理を実行　返却日は指定） */}
+        <Card>
+          <CardContent className="space-y-4">
+            <Label>返却日</Label>
+            <Input
+              type="date"
+              value={formState.return_date}
+              onChange={(e) => {
+                setFormState((prev) => ({
+                  ...prev,
+                  return_date: e.target.value,
+                }));
+              }}
+            />
+            {/* // 貸出冊数の表示 */}
+            <Label>現在の冊数：{return_id_list.length ?? 0}冊</Label>
+            {/* // 貸出ボタン */}
+            <Button onClick={clickOnSubmit}>返却</Button>
+          </CardContent>
+        </Card>
       </div>
-      {/* // 1. ユーザー検索 */}
-      <Card className="user-card">
-        <CardHeader>
-          <Label>貸出情報</Label>
-          <Input
-            placeholder="Search users..."
-            className="search-user-box"
-            value={searchUserCode}
-            onChange={(e) => {
-              set_searchUserCode(e.target.value);
-            }}
-          />
-          <Button onClick={clickUserSearch}>Search</Button>
-        </CardHeader>
-
-        <CardContent>
-          <Label>UserCode</Label>
-          <Input
-            value={`${userData?.libraflow_m_user[0].user_code || ""}`}
-            readOnly
-          />
-          <Label>UserName</Label>
-          <Input
-            value={`${userData?.libraflow_m_user[0].user_name || ""}`}
-            readOnly
-          />
-        </CardContent>
-      </Card>
-
-      {/* ; // 2. 貸出中の本の表示（返却するものにチェックボックスをつけてそれで返却を制御する） */}
-      <Card>
-        <CardContent>
-          <Label>予約候補</Label>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>選択</TableHead>
-                <TableHead>コード</TableHead>
-                <TableHead>タイトル</TableHead>
-                <TableHead>著者</TableHead>
-                <TableHead>ISBNコード</TableHead>
-                <TableHead>貸出中</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData?.libraflow_t_borrow_record?.map((book: any) => (
-                <TableRow key={book.id}>
-                  <TableCell key={book.id}>
-                    <Checkbox
-                      id={book.id}
-                      onCheckedChange={(e) => {
-                        if (e) {
-                          set_return_id_list((prev) => [...prev, book.id]);
-                        } else {
-                          set_return_id_list((prev) =>
-                            prev.filter((id) => id !== book.id)
-                          );
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{book.t_book.book_code}</TableCell>
-                  <TableCell>{book.t_book.title}</TableCell>
-                  <TableCell>{book.t_book.author}</TableCell>
-                  <TableCell>{book.t_book.isbn_code}</TableCell>
-                  <TableCell>
-                    {/* {book.t_borrow_records[0].m_user.user_name} */}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* // 3. 返却ボタン（返却処理を実行　返却日は指定） */}
-      <Card>
-        <CardContent>
-          <Label>返却日</Label>
-          <Input
-            type="date"
-            value={formState.return_date}
-            onChange={(e) => {
-              setFormState((prev) => ({
-                ...prev,
-                return_date: e.target.value,
-              }));
-            }}
-          />
-          {/* // 貸出冊数の表示 */}
-          <Label>現在の冊数：{return_id_list.length ?? 0}冊</Label>
-          {/* // 貸出ボタン */}
-          <Button onClick={clickOnSubmit}>返却</Button>
-        </CardContent>
-      </Card>
     </>
   );
 }
