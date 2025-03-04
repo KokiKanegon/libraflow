@@ -84,6 +84,37 @@ export const q_GET_BOOK_BY_CODE = `
   }
 `;
 
+export const q_SEARCH_BOOK_WITH_IMAGE = `
+  query MyQuery($searchCode: String!, $searchTitle: String!) {
+    libraflow_t_book(
+      where: {
+        _and: [
+          { book_code: { _like: $searchCode } },
+          { title: { _like: $searchTitle } }
+        ]
+      }
+    ) {
+      id
+      book_code
+      title
+      author
+      isbn_code
+      m_category_id
+      m_storage_location_id
+      update_date
+      create_date
+      _is_delete
+      note
+      publisher
+      publication_date
+      t_book_images(limit: 1) {
+        file_data
+        is_url
+      }
+    }
+  }
+`;
+
 // 画像取得用クエリ
 export const q_GET_BOOK_IMAGE = `
   query GetBookImage($t_book_id: uuid!) {

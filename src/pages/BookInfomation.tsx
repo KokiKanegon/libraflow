@@ -2,7 +2,7 @@ import { gql, useQuery } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { q_SEARCH_BOOK } from "../gql/querys";
+import { q_SEARCH_BOOK, q_SEARCH_BOOK_WITH_IMAGE } from "../gql/querys";
 import { useEffect, useState } from "react";
 import BookItem from "../components/bookitem";
 import { BookProps } from "../types";
@@ -10,6 +10,7 @@ import { BookProps } from "../types";
 function BookInfo() {
   const navigate = useNavigate();
   const SEARCH_BOOK = gql(q_SEARCH_BOOK);
+  const SEARCH_BOOK_WITH_IMAGE = gql(q_SEARCH_BOOK_WITH_IMAGE);
 
   // 検索フォームの状態
   const [formState, setFormState] = useState({
@@ -21,21 +22,23 @@ function BookInfo() {
   const [bookInfoList, setBookInfoList] = useState([]);
 
   // GraphQL のクエリ
-  const { refetch } = useQuery(SEARCH_BOOK, {});
+  const { refetch: refetchWithImage } = useQuery(SEARCH_BOOK_WITH_IMAGE, {});
 
   useEffect(() => {
-    handleSearch();
+    handleSearchWithImage();
   }, []);
 
   // 検索ボタンクリック時の処理
-  const handleSearch = async () => {
+  const handleSearchWithImage = async () => {
     const { searchCode, searchWord } = formState;
 
     try {
-      const result = await refetch({
+      const result = await refetchWithImage({
         searchCode: searchCode ? `%${searchCode}%` : "%", // 空の場合はすべてに一致
         searchTitle: searchWord ? `%${searchWord}%` : "%", // 空の場合はすべてに一致
       });
+      console.log(result);
+      console.log(result.data.libraflow_t_book[0].t_book_images[0]);
 
       setBookInfoList(result.data?.libraflow_t_book || []); // 結果をセット
     } catch (error) {
@@ -65,11 +68,12 @@ function BookInfo() {
             setFormState({ ...formState, searchWord: e.target.value })
           }
         />
-        <Button onClick={handleSearch}>Search</Button>
+        <Button onClick={handleSearchWithImage}>Search</Button>
       </div>
 
       <ul className="space-y-4">
         {bookInfoList.map((book: BookProps["book"]) => {
+          console.log(book);
           return (
             <div className="flex justify-between">
               <BookItem key={book.id} book={book} />

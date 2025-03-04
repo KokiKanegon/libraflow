@@ -15,6 +15,11 @@ export type BookProps = {
     publisher?: string;
     publication_date?: string;
     isbn_code?: string;
-    imageUrl?: string; // 書影のURL（ない場合はプレースホルダー）
+    t_book_images: [
+      {
+        file_data: string; // 書影のURL（ない場合はプレースホルダー）
+        is_url: boolean;
+      }
+    ];
   };
 };
