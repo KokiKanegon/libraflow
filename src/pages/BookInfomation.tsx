@@ -27,6 +27,10 @@ function BookInfo() {
     handleSearchWithImage();
   }, []);
 
+  const addCart = async () => {
+    alert("カートに追加する（未実装）");
+  };
+
   // 検索ボタンクリック時の処理
   const handleSearchWithImage = async () => {
     const { searchCode, searchWord } = formState;
@@ -76,12 +80,21 @@ function BookInfo() {
           return (
             <div className="flex justify-between">
               <BookItem key={book.id} book={book} />
-              <Button
-                className="place-self-center"
-                onClick={() => navigate(`/edit/${book.id}`)}
-              >
-                編集
-              </Button>
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <Button
+                  className="place-self-center"
+                  onClick={() => navigate(`/edit/${book.id}`)}
+                >
+                  編集
+                </Button>
+                <Button
+                  className="place-self-center"
+                  key={book.id}
+                  onClick={() => addCart()}
+                >
+                  借りる
+                </Button>
+              </div>
             </div>
           );
         })}

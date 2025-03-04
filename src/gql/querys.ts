@@ -71,7 +71,26 @@ export const q_GET_BOOK_BY_CODE = `
       note
       publisher
       publication_date
+      }
     }
+`;
+
+// 書籍情報の取得
+export const q_GET_BOOK_BY_BOOKCODE = `
+query GetBookByCode($book_codes: [String!]) {
+  libraflow_t_book(where: {book_code: {_in: $book_codes}}) {
+    id
+    book_code
+    title
+    author
+    isbn_code
+    t_borrow_records(order_by: {borrow_date: desc}, where: {return_date: {_is_null: true}}, limit: 1) {
+      m_user {
+        user_name
+      }
+    }
+  }
+}
 `;
 
 export const q_GET_PULLDOWN_LIST = `    
@@ -219,6 +238,37 @@ export const q_UPLOAD_IMAGE_MUTATION = `
         id
         file_data
         t_book_id
+      }
+    }
+  }
+`;
+
+// 検索用クエリ
+export const q_GET_BOOK_BY_CODE_SHORT = `
+  query GetBookByCode($a: String!) {
+  libraflow_t_book(where: {book_code: {_eq: $a}}) {
+    id
+  }
+}
+`;
+
+export const q_INSERT_REGISTERATION = `
+mutation InsertBookRecord(
+    $m_user_id: uuid!
+    $t_book_id: uuid!
+    $borrow_date: date!
+  ) {
+    insert_libraflow_t_borrow_record(
+      objects: [
+        {
+          m_user_id: $m_user_id
+          t_book_id: $t_book_id
+          borrow_date: $borrow_date
+        }
+      ]
+    ) {
+      returning {
+        id
       }
     }
   }

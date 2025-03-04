@@ -15,88 +15,38 @@ import {
 } from "../components/ui/table";
 import { isLoggedIn } from "../main";
 import { useNavigate } from "react-router-dom";
+import {
+  q_GET_BOOK_BY_BOOKCODE,
+  q_GET_BOOK_BY_CODE_SHORT,
+  q_GET_USER,
+  q_INSERT_REGISTERATION,
+} from "../gql/querys";
+import { typeUserState } from "../types";
+
 // import { set } from "react-hook-form";
 // import { graphql } from "./gql/gql";
 
-// 検索用クエリ
-const GET_BOOK_BY_CODE_SHORT = gql(`
-  query GetBookByCode($a: String!) {
-  libraflow_t_book(where: {book_code: {_eq: $a}}) {
-    id
-  }
-}
-`);
-
-// ユーザー検索クエリ
-const GET_USER = gql(`
-  query GetUserByCode($user_code: String!) {
-  libraflow_m_user(where: {user_code: {_eq: $user_code}}) {
-    id
-    user_code
-    user_name
-  }
-}
-`);
-
-//
-const GET_BOOK_BY_CODE = gql(`
-query GetBookByCode($book_codes: [String!]) {
-  libraflow_t_book(where: {book_code: {_in: $book_codes}}) {
-    id
-    book_code
-    title
-    author
-    isbn_code
-    t_borrow_records(order_by: {borrow_date: desc}, where: {return_date: {_is_null: true}}, limit: 1) {
-      m_user {
-        user_name
-      }
-    }
-  }
-}
-`);
-
-const INSERT_REGISTERATION = gql(`
-mutation InsertBookRecord(
-    $m_user_id: uuid!
-    $t_book_id: uuid!
-    $borrow_date: date!
-  ) {
-    insert_libraflow_t_borrow_record(
-      objects: [
-        {
-          m_user_id: $m_user_id
-          t_book_id: $t_book_id
-          borrow_date: $borrow_date
-        }
-      ]
-    ) {
-      returning {
-        id
-      }
-    }
-  }
-`);
+const GET_USER = gql(q_GET_USER);
+const GET_BOOK_BY_CODE = gql(q_GET_BOOK_BY_BOOKCODE);
+const GET_BOOK_BY_CODE_SHORT = gql(q_GET_BOOK_BY_CODE_SHORT);
+const INSERT_REGISTERATION = gql(q_INSERT_REGISTERATION);
 
 export default function BookRegister() {
+  const [searchCode, set_searchCode] = useState<string>("");
+  const [searchUserCode, set_searchUserCode] = useState<string>("");
+  const [book_code_list, set_book_code_list] = useState<string[]>([]); // 書籍コードリスト
   const navigate = useNavigate();
-  // 現在のログイン情報を保持するリアクティブ変数。
-  type UserState = {
-    id: string;
-    user_code: string;
-    user_name: string;
-  } | null;
+  const [formState, setFormState] = useState({
+    m_user_id: "",
+    borrow_date: dateFormat(new Date(), "YYYY-MM-DD"),
+  }); // 編集用データ
 
-  const login: UserState = useReactiveVar(isLoggedIn);
+  const login: typeUserState = useReactiveVar(isLoggedIn);
   useEffect(() => {
     if (login) {
       getuserquery({ variables: { user_code: login.user_code } });
     }
   }, []);
-
-  const [searchCode, set_searchCode] = useState<string>("");
-  const [searchUserCode, set_searchUserCode] = useState<string>("");
-  const [book_code_list, set_book_code_list] = useState<string[]>([]); // 書籍コードリスト
 
   function dateFormat(today: any, format: any) {
     format = format.replace("YYYY", today.getFullYear());
@@ -104,11 +54,6 @@ export default function BookRegister() {
     format = format.replace("DD", ("0" + today.getDate()).slice(-2));
     return format;
   }
-
-  const [formState, setFormState] = useState({
-    m_user_id: "",
-    borrow_date: dateFormat(new Date(), "YYYY-MM-DD"),
-  }); // 編集用データ
 
   useEffect(() => {
     if (book_code_list) {
@@ -223,10 +168,6 @@ export default function BookRegister() {
     const { m_user_id, borrow_date } = formState;
     let message = "";
 
-    console.log("m_user_id", m_user_id);
-    console.log("borrow_date", borrow_date);
-    console.log("tableData", tableData.libraflow_t_book[0].id);
-
     try {
       // Promise.all を使い、すべての非同期処理を並列実行
       const insertions = tableData.libraflow_t_book.map((book: any) =>
@@ -254,26 +195,25 @@ export default function BookRegister() {
   };
 
   return (
-    <>
-      {/* // タイトル表示 */}
-      <div>
-        <h1> Book Register Page</h1>
-        <p> 本を読み取ってください。</p>
-      </div>
-      {/* // 検索画面（Inputbox and SearchButton） */}
-      <div>
-        <Input
-          placeholder="Search books..."
-          className="search-box"
-          value={searchCode}
-          onChange={(e) => {
-            set_searchCode(e.target.value);
-          }}
-        />
-        <Button onClick={clickBookSearch}>Search</Button>
-      </div>
-      {/* // ViewBookInformation */}
+    <div className="space-y-2">
+      {/* タイトル表示 */}
+      <h1> Book Register Page</h1>
+      <p> 本を読み取ってください。</p>
+      {/* 検索画面（Inputbox and SearchButton） */}
       <Card>
+        <CardHeader>
+          <div className="flex space-x-2">
+            <Input
+              placeholder="Search books with book code..."
+              className="search-box"
+              value={searchCode}
+              onChange={(e) => {
+                set_searchCode(e.target.value);
+              }}
+            />
+            <Button onClick={clickBookSearch}>Search</Button>
+          </div>
+        </CardHeader>
         <CardContent>
           <Label>予約候補</Label>
           <Table>
@@ -311,16 +251,20 @@ export default function BookRegister() {
 
       <Card>
         <CardHeader>
-          <Label>貸出情報</Label>
-          <Input
-            placeholder="Search users..."
-            className="search-user-box"
-            value={searchUserCode}
-            onChange={(e) => {
-              set_searchUserCode(e.target.value);
-            }}
-          />
-          <Button onClick={clickUserSearch}>Search</Button>
+          <Label>貸出者情報</Label>
+          {!login && (
+            <div className="flex space-x-2">
+              <Input
+                placeholder="Search users..."
+                className="search-user-box"
+                value={searchUserCode}
+                onChange={(e) => {
+                  set_searchUserCode(e.target.value);
+                }}
+              />
+              <Button onClick={clickUserSearch}>Search</Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Label>UserCode</Label>
@@ -350,10 +294,16 @@ export default function BookRegister() {
         </CardContent>
       </Card>
 
-      {/* // 貸出冊数の表示 */}
-      <Label>現在の冊数：{book_code_list.length ?? 0}冊</Label>
-      {/* // 貸出ボタン */}
-      <Button onClick={clickOnSubmit}>借りる</Button>
-    </>
+      {/* 貸出冊数の表示 */}
+      <div className="flex-col flex space-y-2 items-center">
+        <Label className="text-xl">
+          現在の冊数：{book_code_list.length ?? 0}冊
+        </Label>
+        {/* 貸出ボタン */}
+        <Button className="w-40 h-10" onClick={clickOnSubmit}>
+          借りる
+        </Button>
+      </div>
+    </div>
   );
 }

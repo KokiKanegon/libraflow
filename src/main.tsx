@@ -15,7 +15,7 @@ import Layout from "./Layout";
 import BookRegister from "./pages/BookRegister.js";
 import BookReturn from "./pages/BookReturn.js";
 import Settings from "./pages/Settings.js";
-import { typeUserState } from "./types.ts";
+import { Cart, typeUserState } from "./types.ts";
 import ImageUploadTest from "./pages/ImageUploadTest.tsx";
 
 const client = new ApolloClient({
@@ -27,6 +27,7 @@ const login_str = sessionStorage.getItem("login");
 const loginState: typeUserState = login_str ? JSON.parse(login_str) : null;
 
 export const isLoggedIn = makeVar<typeUserState>(loginState);
+export const cart = makeVar<Cart>([]);
 
 //都度のrerenderをストップするためのif文
 const rootElement = document.getElementById("root");

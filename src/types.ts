@@ -5,6 +5,18 @@ export type typeUserState = {
   user_name: string;
 } | null;
 
+// カートに追加された本の型
+export type CartItem = {
+  id: string;
+  book_code: string;
+  title?: string;
+  author?: string;
+  isbn_code?: string;
+};
+
+// カートの型（配列）
+export type Cart = CartItem[];
+
 export type BookProps = {
   book: {
     id: string;
