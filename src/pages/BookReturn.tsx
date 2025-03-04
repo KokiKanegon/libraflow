@@ -204,7 +204,7 @@ export default function BookReturn() {
         <Card>
           <CardContent>
             <Label>貸出書籍</Label>
-            {return_id_list.length > 0 ? (
+            {tableData?.libraflow_t_borrow_record.length !== 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
