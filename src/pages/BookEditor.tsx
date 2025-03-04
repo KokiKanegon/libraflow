@@ -24,6 +24,7 @@ import { Switch } from "../components/ui/switch";
 import {
   q_GET_BOOK_BY_CODE,
   q_GET_BOOK_IMAGE,
+  q_GET_PULLDOWN_LIST,
   q_INSERT_BOOK,
   q_UPDATE_BOOK,
   q_UPLOAD_IMAGE_MUTATION,
@@ -38,6 +39,7 @@ const GET_BOOK_IMAGE = gql(q_GET_BOOK_IMAGE);
 const UPDATE_BOOK = gql(q_UPDATE_BOOK);
 const INSERT_BOOK = gql(q_INSERT_BOOK);
 const UPLOAD_IMAGE_MUTATION = gql(q_UPLOAD_IMAGE_MUTATION);
+const GET_PULLDOWN_LIST = gql(q_GET_PULLDOWN_LIST);
 
 const getGoogleBooksData = async (isbn_code: string) => {
   try {
@@ -134,6 +136,9 @@ function BookEditor() {
   const { data, loading, error } = useQuery(GET_BOOK_BY_CODE, {
     variables: { id: book_id_on_url ?? "" },
   });
+
+  const { data: pulldonw_data } = useQuery(GET_PULLDOWN_LIST);
+
   // フォームのアップデート処理
   useEffect(() => {
     if (data && data.libraflow_t_book.length > 0) {
@@ -460,11 +465,13 @@ function BookEditor() {
                     <SelectValue placeholder="Select a Category" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {data?.libraflow_m_category.map((category: any) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.category_name}
-                      </SelectItem>
-                    ))}
+                    {pulldonw_data?.libraflow_m_category.map(
+                      (category: any) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.category_name}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
                 <Select
@@ -481,13 +488,15 @@ function BookEditor() {
                     <SelectValue placeholder="Select a Storage location" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {data?.libraflow_m_storage_location.map((storage: any) => {
-                      return (
-                        <SelectItem key={storage.id} value={storage.id}>
-                          {storage.storage_location_name}
-                        </SelectItem>
-                      );
-                    })}
+                    {pulldonw_data?.libraflow_m_storage_location.map(
+                      (storage: any) => {
+                        return (
+                          <SelectItem key={storage.id} value={storage.id}>
+                            {storage.storage_location_name}
+                          </SelectItem>
+                        );
+                      }
+                    )}
                   </SelectContent>
                 </Select>
                 <Label htmlFor="name">Note</Label>

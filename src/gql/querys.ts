@@ -72,6 +72,10 @@ export const q_GET_BOOK_BY_CODE = `
       publisher
       publication_date
     }
+`;
+
+export const q_GET_PULLDOWN_LIST = `    
+  query GetPulldownList {
     libraflow_m_storage_location(order_by: { index: asc }) {
       id
       storage_location_name
@@ -81,8 +85,7 @@ export const q_GET_BOOK_BY_CODE = `
       id
       category_name
     }
-  }
-`;
+  }`;
 
 export const q_SEARCH_BOOK_WITH_IMAGE = `
   query MyQuery($searchCode: String!, $searchTitle: String!) {
