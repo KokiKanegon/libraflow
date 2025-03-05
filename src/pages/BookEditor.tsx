@@ -29,10 +29,7 @@ import {
   q_UPDATE_BOOK,
   q_UPLOAD_IMAGE_MUTATION,
 } from "../gql/querys";
-import { UUIDTypes, v4 as uuidv4 } from "uuid";
-import { UUID } from "crypto";
-// import { valueFromAST } from "graphql";
-// import { graphql } from "./gql/gql";
+import { v4 as uuidv4 } from "uuid";
 
 const GET_BOOK_BY_CODE = gql(q_GET_BOOK_BY_CODE);
 const GET_BOOK_IMAGE = gql(q_GET_BOOK_IMAGE);

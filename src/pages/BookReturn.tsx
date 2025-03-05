@@ -2,15 +2,7 @@ import { useEffect, useState } from "react";
 import { gql, useMutation, useLazyQuery, useReactiveVar } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-// import { useParams } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  // CardDescription,
-  // CardHeader,
-  // CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import {
   Table,
@@ -29,13 +21,11 @@ import {
   q_RETURN_BOOK,
 } from "../gql/querys";
 import { typeUserState } from "../types";
-// import { graphql } from "./gql/gql";
 
 const GET_USER = gql(q_GET_USER);
 const RETURN_BOOK = gql(q_RETURN_BOOK);
 const GET_REGISTER_BY_USER = gql(q_GET_REGISTER_BY_USER);
 
-// function dateFormat -> change date format
 function dateFormat(today: any, format: any) {
   format = format.replace("YYYY", today.getFullYear());
   format = format.replace("MM", ("0" + (today.getMonth() + 1)).slice(-2));

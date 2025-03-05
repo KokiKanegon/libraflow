@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { gql, useMutation, useLazyQuery, useReactiveVar } from "@apollo/client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-// import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import {
@@ -23,9 +22,6 @@ import {
 } from "../gql/querys";
 import { typeUserState } from "../types";
 
-// import { set } from "react-hook-form";
-// import { graphql } from "./gql/gql";
-
 const GET_USER = gql(q_GET_USER);
 const GET_BOOK_BY_CODE = gql(q_GET_BOOK_BY_BOOKCODE);
 const GET_BOOK_BY_CODE_SHORT = gql(q_GET_BOOK_BY_CODE_SHORT);
@@ -39,7 +35,7 @@ export default function BookRegister() {
   const [formState, setFormState] = useState({
     m_user_id: "",
     borrow_date: dateFormat(new Date(), "YYYY-MM-DD"),
-  }); // 編集用データ
+  });
 
   const login: typeUserState = useReactiveVar(isLoggedIn);
   const cart: string[] = useReactiveVar(cartBookId);
@@ -70,42 +66,30 @@ export default function BookRegister() {
     cartBookId(book_id_list); // setterを使う
   }, [book_id_list]);
 
-  // 書籍データを取得
   const [checkquery, {}] = useLazyQuery(GET_BOOK_BY_CODE_SHORT, {
     onCompleted: (useData) => {
       if (useData.libraflow_t_book.length === 0) {
         alert("No book found.");
         set_searchCode("");
       } else {
-        // すでに book_id_list に含まれている場合はスキップ
         if (book_id_list.includes(useData.libraflow_t_book[0].id)) {
           alert("This book code is already added.");
           set_searchCode(""); // 入力欄をリセット
           return;
         }
-        // コードリストに追加
         set_book_id_list((prev) => [...prev, useData.libraflow_t_book[0].id]);
         set_searchCode(""); // 入力欄をリセット
       }
     },
   });
 
-  // 表示用書籍データを取得
-  const [
-    getquery,
-    { data: tableData },
-    // { data: tableData, loading: tableLoading, error: tableError },
-  ] = useLazyQuery(GET_BOOK_BY_CODE, {
+  const [getquery, { data: tableData }] = useLazyQuery(GET_BOOK_BY_CODE, {
     onCompleted: (tableData) => {
       console.log("tableData", tableData);
     },
   });
 
-  const [
-    getuserquery,
-    // { data: userData, loading: userLoading, error: userError },
-    { data: userData },
-  ] = useLazyQuery(GET_USER, {
+  const [getuserquery, { data: userData }] = useLazyQuery(GET_USER, {
     onCompleted: (userData) => {
       if (userData.libraflow_m_user.length === 0) {
         alert("No user found.");
@@ -175,7 +159,6 @@ export default function BookRegister() {
 
     const { m_user_id, borrow_date } = formState;
     let message = "";
-
     try {
       // Promise.all を使い、すべての非同期処理を並列実行
       const insertions = tableData.libraflow_t_book.map((book: any) =>
