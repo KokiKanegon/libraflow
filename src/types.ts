@@ -27,12 +27,10 @@ export type BookProps = {
     publisher?: string;
     publication_date?: string;
     isbn_code?: string;
-    t_book_images: [
-      {
-        file_data: string; // 書影のURL（ない場合はプレースホルダー）
-        is_url: boolean;
-      }
-    ];
+    t_book_image: {
+      file_data: string; // 書影のURL（ない場合はプレースホルダー）
+      is_url: boolean;
+    };
     t_borrow_records: [
       {
         m_user: {

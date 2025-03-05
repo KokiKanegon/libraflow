@@ -129,7 +129,7 @@ export const q_SEARCH_BOOK_WITH_IMAGE = `
       note
       publisher
       publication_date
-      t_book_images(limit: 1) {
+      t_book_image {
         file_data
         is_url
       }
