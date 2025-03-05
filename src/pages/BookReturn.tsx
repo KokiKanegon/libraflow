@@ -205,45 +205,63 @@ export default function BookReturn() {
           <CardContent>
             <Label>貸出書籍</Label>
             {tableData?.libraflow_t_borrow_record.length !== 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>選択</TableHead>
-                    <TableHead>コード</TableHead>
-                    <TableHead>タイトル</TableHead>
-                    <TableHead>著者</TableHead>
-                    <TableHead>ISBNコード</TableHead>
-                    <TableHead>貸出中</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tableData?.libraflow_t_borrow_record?.map((book: any) => (
-                    <TableRow key={book.id}>
-                      <TableCell key={book.id}>
-                        <Checkbox
-                          id={book.id}
-                          onCheckedChange={(e) => {
-                            if (e) {
-                              set_return_id_list((prev) => [...prev, book.id]);
-                            } else {
-                              set_return_id_list((prev) =>
-                                prev.filter((id) => id !== book.id)
-                              );
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{book.t_book.book_code}</TableCell>
-                      <TableCell>{book.t_book.title}</TableCell>
-                      <TableCell>{book.t_book.author}</TableCell>
-                      <TableCell>{book.t_book.isbn_code}</TableCell>
-                      <TableCell>
-                        {/* {book.t_borrow_records[0].m_user.user_name} */}
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>選択</TableHead>
+                      <TableHead>コード</TableHead>
+                      <TableHead>タイトル</TableHead>
+                      <TableHead>著者</TableHead>
+                      <TableHead>ISBNコード</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {tableData?.libraflow_t_borrow_record?.map((book: any) => (
+                      <TableRow key={book.id}>
+                        <TableCell key={book.id}>
+                          <Checkbox
+                            id={book.id}
+                            checked={return_id_list.includes(book.id)} // チェック状態を正しく設定
+                            onCheckedChange={(e) => {
+                              if (e) {
+                                set_return_id_list((prev) => [
+                                  ...prev,
+                                  book.id,
+                                ]); // チェック時に追加
+                              } else {
+                                set_return_id_list((prev) =>
+                                  prev.filter((id) => id !== book.id)
+                                ); // チェック解除時に削除
+                              }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>{book.t_book.book_code}</TableCell>
+                        <TableCell>{book.t_book.title}</TableCell>
+                        <TableCell>{book.t_book.author}</TableCell>
+                        <TableCell>{book.t_book.isbn_code}</TableCell>
+                        <TableCell>
+                          {/* {book.t_borrow_records[0].m_user.user_name} */}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Button
+                  onClick={() => {
+                    set_return_id_list((prev) =>
+                      prev.length > 0
+                        ? [] // すでに選択されていたら全解除
+                        : tableData?.libraflow_t_borrow_record.map(
+                            (book: any) => book.id
+                          ) || []
+                    );
+                  }}
+                >
+                  全選択/選択解除
+                </Button>
+              </>
             ) : (
               <h2 className="text-red-700 text-xl">貸出中の書籍はありません</h2>
             )}

@@ -12,7 +12,6 @@ import {
   DoorClosed,
   DoorOpen,
 } from "lucide-react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useReactiveVar } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import { useLogout } from "./logout";
+import { useEffect, useState } from "react";
 
 type UserState = {
   id: string;
@@ -37,50 +37,58 @@ type UserState = {
   user_name: string;
 } | null;
 
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    url: "/libraflow/home",
-    icon: Home,
-  },
-  {
-    title: "Book Information",
-    url: "/libraflow/bookinfo",
-    icon: BookOpen,
-  },
-  {
-    title: "Edit Book",
-    url: "/libraflow/edit/:book_code",
-    icon: Edit,
-  },
-  {
-    title: "Register Book",
-    url: "/libraflow/register/",
-    icon: BookCopyIcon,
-  },
-  {
-    title: "Return Book",
-    url: "/libraflow/return/",
-    icon: BookDashedIcon,
-  },
-  {
-    title: "MyPage",
-    url: "/libraflow/mypage",
-    icon: Book,
-  },
-  {
-    title: "Settings",
-    url: "/libraflow/settings",
-    icon: Settings,
-  },
-];
-
 // Sidebar component.
 export function AppSidebar() {
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const cartStr = sessionStorage.getItem("cart");
+    const cartData = cartStr ? JSON.parse(cartStr) : [];
+    setCartCount(cartData.length);
+  }, []);
+
   const navigate = useNavigate();
   const login = useReactiveVar(isLoggedIn);
   const logout = useLogout();
+  // Menu items.
+  const items = [
+    {
+      title: "Home",
+      url: "/libraflow/home",
+      icon: Home,
+    },
+    {
+      title: "Book Information",
+      url: "/libraflow/bookinfo",
+      icon: BookOpen,
+    },
+    {
+      title: "Edit Book",
+      url: "/libraflow/edit/:book_code",
+      icon: Edit,
+    },
+    {
+      title: `Register Book (${cartCount})`,
+      url: "/libraflow/register/",
+      icon: BookCopyIcon,
+    },
+    {
+      title: "Return Book",
+      url: "/libraflow/return/",
+      icon: BookDashedIcon,
+    },
+    {
+      title: "MyPage",
+      url: "/libraflow/mypage",
+      icon: Book,
+    },
+    {
+      title: "Settings",
+      url: "/libraflow/settings",
+      icon: Settings,
+    },
+  ];
+
   return (
     <>
       <Sidebar>

@@ -23,14 +23,10 @@ const BookItem: React.FC<BookProps> = ({ book }) => {
     );
   };
 
-  console.log(book);
-  console.log(book?.t_book_images[0].is_url);
   const isURL = book?.t_book_images[0].is_url;
   const imgSrc = isURL
     ? hexToString(book.t_book_images[0].file_data)
     : hexToBase64(book.t_book_images[0].file_data);
-
-  console.log(imgSrc);
 
   return (
     <li key={book.id} className="p-4 border rounded-lg shadow w-full mr-2">

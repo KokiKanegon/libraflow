@@ -6,7 +6,7 @@ export type typeUserState = {
 } | null;
 
 // カートに追加された本の型
-export type CartItem = {
+export type typeCartItem = {
   id: string;
   book_code: string;
   title?: string;
@@ -15,7 +15,7 @@ export type CartItem = {
 };
 
 // カートの型（配列）
-export type Cart = CartItem[];
+export type typeCart = typeCartItem[];
 
 export type BookProps = {
   book: {
@@ -31,6 +31,13 @@ export type BookProps = {
       {
         file_data: string; // 書影のURL（ない場合はプレースホルダー）
         is_url: boolean;
+      }
+    ];
+    t_borrow_records: [
+      {
+        m_user: {
+          user_name: string;
+        };
       }
     ];
   };

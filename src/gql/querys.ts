@@ -77,8 +77,8 @@ export const q_GET_BOOK_BY_CODE = `
 
 // 書籍情報の取得
 export const q_GET_BOOK_BY_BOOKCODE = `
-query GetBookByCode($book_codes: [String!]) {
-  libraflow_t_book(where: {book_code: {_in: $book_codes}}) {
+query GetBookByCode($id: [uuid!]) {
+  libraflow_t_book(where: {id: {_in: $id}}) {
     id
     book_code
     title
@@ -133,6 +133,11 @@ export const q_SEARCH_BOOK_WITH_IMAGE = `
         file_data
         is_url
       }
+      t_borrow_records(order_by: {borrow_date: desc}, where: {return_date: {_is_null: true}}, limit: 1) {
+        m_user {
+        user_name
+      }
+    }
     }
   }
 `;

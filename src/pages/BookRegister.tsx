@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { isLoggedIn } from "../main";
+import { cartBookId, isLoggedIn } from "../main";
 import { useNavigate } from "react-router-dom";
 import {
   q_GET_BOOK_BY_BOOKCODE,
@@ -34,7 +34,7 @@ const INSERT_REGISTERATION = gql(q_INSERT_REGISTERATION);
 export default function BookRegister() {
   const [searchCode, set_searchCode] = useState<string>("");
   const [searchUserCode, set_searchUserCode] = useState<string>("");
-  const [book_code_list, set_book_code_list] = useState<string[]>([]); // 書籍コードリスト
+  const [book_id_list, set_book_id_list] = useState<string[]>([]); // 書籍コードリスト
   const navigate = useNavigate();
   const [formState, setFormState] = useState({
     m_user_id: "",
@@ -42,9 +42,15 @@ export default function BookRegister() {
   }); // 編集用データ
 
   const login: typeUserState = useReactiveVar(isLoggedIn);
+  const cart: string[] = useReactiveVar(cartBookId);
+
   useEffect(() => {
     if (login) {
       getuserquery({ variables: { user_code: login.user_code } });
+    }
+    if (cart?.length > 0) {
+      console.log(cart);
+      set_book_id_list(cart);
     }
   }, []);
 
@@ -56,10 +62,13 @@ export default function BookRegister() {
   }
 
   useEffect(() => {
-    if (book_code_list) {
-      getquery({ variables: { book_codes: book_code_list ?? [] } });
+    if (book_id_list) {
+      getquery({ variables: { id: book_id_list ?? [] } });
     }
-  }, [book_code_list]);
+
+    sessionStorage.setItem("cart", JSON.stringify(book_id_list));
+    cartBookId(book_id_list); // setterを使う
+  }, [book_id_list]);
 
   // 書籍データを取得
   const [checkquery, {}] = useLazyQuery(GET_BOOK_BY_CODE_SHORT, {
@@ -68,14 +77,14 @@ export default function BookRegister() {
         alert("No book found.");
         set_searchCode("");
       } else {
-        // すでに book_code_list に含まれている場合はスキップ
-        if (book_code_list.includes(searchCode)) {
+        // すでに book_id_list に含まれている場合はスキップ
+        if (book_id_list.includes(useData.libraflow_t_book[0].id)) {
           alert("This book code is already added.");
           set_searchCode(""); // 入力欄をリセット
           return;
         }
         // コードリストに追加
-        set_book_code_list((prev) => [...prev, searchCode]);
+        set_book_id_list((prev) => [...prev, useData.libraflow_t_book[0].id]);
         set_searchCode(""); // 入力欄をリセット
       }
     },
@@ -92,7 +101,6 @@ export default function BookRegister() {
     },
   });
 
-  // 表示用書籍データを取得
   const [
     getuserquery,
     // { data: userData, loading: userLoading, error: userError },
@@ -126,8 +134,8 @@ export default function BookRegister() {
 
   const clickDeleteBook: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     const value = e.currentTarget.value;
-    if (book_code_list.includes(value)) {
-      set_book_code_list((prev) => prev.filter((code) => code !== value));
+    if (book_id_list.includes(value)) {
+      set_book_id_list((prev) => prev.filter((code) => code !== value));
     }
   };
 
@@ -156,7 +164,7 @@ export default function BookRegister() {
         alert(
           `Book ${tableData.libraflow_t_book[i].book_code} is already borrowed.`
         );
-        set_book_code_list((prev) =>
+        set_book_id_list((prev) =>
           prev.filter(
             (code) => code !== tableData.libraflow_t_book[i].book_code
           )
@@ -186,7 +194,10 @@ export default function BookRegister() {
       // すべての insert が完了するまで待機
       await Promise.all(insertions);
 
-      alert(`Book(s) updated successfully! Last updated: ${message}`);
+      set_book_id_list([]);
+      sessionStorage.setItem("cart", JSON.stringify([]));
+      cartBookId([]); // setterを使う
+
       navigate(0);
     } catch (err) {
       console.error("Error updating book:", err);
@@ -216,36 +227,40 @@ export default function BookRegister() {
         </CardHeader>
         <CardContent>
           <Label>予約候補</Label>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>コード</TableHead>
-                <TableHead>タイトル</TableHead>
-                <TableHead>著者</TableHead>
-                <TableHead>ISBNコード</TableHead>
-                <TableHead>貸出中</TableHead>
-                <TableHead>解除</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData?.libraflow_t_book?.map((book: any) => (
-                <TableRow key={book.id}>
-                  <TableCell>{book.book_code}</TableCell>
-                  <TableCell>{book.title}</TableCell>
-                  <TableCell>{book.author}</TableCell>
-                  <TableCell>{book.isbn_code}</TableCell>
-                  <TableCell>
-                    {book?.t_borrow_records[0]?.m_user.user_name}
-                  </TableCell>
-                  <TableCell>
-                    <Button value={book.book_code} onClick={clickDeleteBook}>
-                      外す
-                    </Button>
-                  </TableCell>
+          {cart.length !== 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>コード</TableHead>
+                  <TableHead>タイトル</TableHead>
+                  <TableHead>著者</TableHead>
+                  <TableHead>ISBNコード</TableHead>
+                  <TableHead>貸出中</TableHead>
+                  <TableHead>解除</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tableData?.libraflow_t_book?.map((book: any) => (
+                  <TableRow key={book.id}>
+                    <TableCell>{book.book_code}</TableCell>
+                    <TableCell>{book.title}</TableCell>
+                    <TableCell>{book.author}</TableCell>
+                    <TableCell>{book.isbn_code}</TableCell>
+                    <TableCell>
+                      {book?.t_borrow_records[0]?.m_user.user_name}
+                    </TableCell>
+                    <TableCell>
+                      <Button value={book.id} onClick={clickDeleteBook}>
+                        外す
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <h2 className="text-red-700 text-xl">カートに書籍はありません</h2>
+          )}
         </CardContent>
       </Card>
 
@@ -297,7 +312,7 @@ export default function BookRegister() {
       {/* 貸出冊数の表示 */}
       <div className="flex-col flex space-y-2 items-center">
         <Label className="text-xl">
-          現在の冊数：{book_code_list.length ?? 0}冊
+          現在の冊数：{book_id_list.length ?? 0}冊
         </Label>
         {/* 貸出ボタン */}
         <Button className="w-40 h-10" onClick={clickOnSubmit}>
