@@ -15,11 +15,11 @@ import Layout from "./Layout";
 import BookRegister from "./pages/BookRegister.js";
 import BookReturn from "./pages/BookReturn.js";
 import Settings from "./pages/Settings.js";
-import { typeCart, typeUserState } from "./types.ts";
+import { typeUserState } from "./types.ts";
 import ImageUploadTest from "./pages/ImageUploadTest.tsx";
 
 const client = new ApolloClient({
-  uri: "http://localhost:8080/v1/graphql",
+  uri: "http://localhost:9090/v1/graphql",
   cache: new InMemoryCache(),
 });
 
